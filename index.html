@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quote Card Maker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Quote Card Maker</h1>
+
+  <div class="layout">
+
+    <!-- Controls -->
+    <div class="controls">
+
+      <!-- Photo Upload -->
+<div>
+  <label class="section-label">Profile Photo</label>
+  <div class="avatar-row">
+    <div class="avatar-wrap" id="avatarWrap">
+      <span id="avatarIcon">👤</span>
+      <img id="avatarPreview" alt="avatar" />
+    </div>
+    <label for="photoUpload" class="upload-btn">
+      Upload Photo
+    </label>
+    <input type="file" id="photoUpload" accept="image/*" style="display:none">
+  </div>
+  <p class="hint-text">Save your  profile pic → upload here</p>
+</div>
+
+      <!-- Name -->
+      <div>
+        <label class="section-label" for="nameInput">Your Name</label>
+        <input type="text" id="nameInput" value="Mybei Godwin" placeholder="e.g. John Doe">
+      </div>
+
+      <!-- Quote -->
+      <div>
+        <label class="section-label" for="quoteInput">Quote Text</label>
+        <textarea id="quoteInput" rows="5">Don't stop when you're tired. Stop when Netflix asks if you're still watching.</textarea>
+      </div>
+
+      <!-- Colors -->
+      <div class="row">
+        <div>
+          <label class="section-label">Background</label>
+          <select id="bgPreset">
+            <option value="#000000">Pure Black</option>
+            <option value="#0d0d0d">Soft Black</option>
+            <option value="#1a1a2e">Dark Navy</option>
+            <option value="#1a1a1a">Charcoal</option>
+            <option value="#ffffff">White</option>
+          </select>
+          <input type="color" id="bgColor" value="#000000">
+        </div>
+        <div>
+          <label class="section-label">Text Color</label>
+          <select id="textPreset">
+            <option value="#ffffff">White</option>
+            <option value="#f0c040">Gold</option>
+            <option value="#add8e6">Light Blue</option>
+            <option value="#000000">Black</option>
+          </select>
+          <input type="color" id="textColor" value="#ffffff">
+        </div>
+      </div>
+
+      <!-- Font Size -->
+      <div>
+        <label class="section-label">Font Size — <span id="fsVal">32</span>px</label>
+        <input type="range" id="fontSize" min="18" max="52" value="32">
+      </div>
+
+      <!-- Font Style -->
+      <div>
+        <label class="section-label">Font Style</label>
+        <select id="fontStyle">
+          <option value="600 {size}px 'Segoe UI', sans-serif">Modern</option>
+          <option value="400 {size}px Georgia, serif">Classic</option>
+          <option value="700 {size}px 'Courier New', monospace">Typewriter</option>
+        </select>
+      </div>
+
+      <!-- Card Size -->
+      <div>
+        <label class="section-label">Card Size</label>
+        <select id="cardSize">
+          <option value="720x720">Square 720×720 (FB Post)</option>
+          <option value="720x900">Portrait 720×900 (Mobile)</option>
+          <option value="1080x1080">HD 1080×1080</option>
+        </select>
+      </div>
+
+      <button class="btn-download" onclick="downloadCard()">⬇ Download PNG</button>
+
+    </div>
+
+    <!-- Canvas Preview -->
+    <div class="preview-wrap">
+      <canvas id="canvas"></canvas>
+      <p class="hint-text">Preview — download for full quality</p>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+  <footer>
+    <hr>
+    <p>&copy;2026.CREATIVE-TECH</p>
+  </footer>
+  
+</body>
+</html>

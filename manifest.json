@@ -1,0 +1,45 @@
+{
+"id": "quotecardmaker",
+  "name": "Quote Card Maker",
+  "short_name": "QuoteCard",
+  "description": "Create and download quote cards",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "720x1280",
+      "type": "image/png"
+    },
+    {
+      "src": "screenshot2.png",
+      "sizes": "720x1280",
+      "type": "image/png"
+    },
+    {
+      "src": "screenshot3.png",
+      "sizes": "720x1280",
+      "type": "image/png"
+    },
+    {
+      "src": "screenshot4.png",
+      "sizes": "720x1280",
+      "type": "image/png"
+    }
+  ]
+}
