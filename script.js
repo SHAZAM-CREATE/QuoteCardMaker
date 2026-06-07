@@ -1,6 +1,6 @@
 // ── IntaSend Keys (replace with your actual keys) ──
-const INTASEND_PUBLIC_KEY = 'ISPubKey_live_ee993074-8546-448a-940e-b27643db3077';
-const INTASEND_SECRET_KEY = 'ISSecretKey_live_7050a35c-f371-4e6d-93c8-bfb2d6e8cb68';
+const INTASEND_PUBLIC_KEY = '';
+const INTASEND_SECRET_KEY = '';
 
 // ── State ──
 let uploadedAvatar = null;
