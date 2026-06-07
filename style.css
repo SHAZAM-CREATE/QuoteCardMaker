@@ -192,3 +192,281 @@ canvas {
   text-align: center;
 }
 
+/* ── Trial Badge ── */
+.trial-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12px;
+  color: #f0c040;
+  margin: 10px auto 0;
+}
+
+.trial-dot {
+  width: 7px;
+  height: 7px;
+  background: #f0c040;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── Modal Overlay ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+/* ── Premium Modal ── */
+.modal {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 20px;
+  padding: 40px 32px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-icon { font-size: 48px; margin-bottom: 16px; }
+
+.modal h2 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #f0c040;
+}
+
+.modal p {
+  color: #888;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.modal-price {
+  font-size: 2.5rem;
+  color: #f0c040;
+  margin-bottom: 4px;
+}
+
+.modal-price span {
+  font-size: 1rem;
+  color: #666;
+}
+
+.modal-features {
+  list-style: none;
+  margin: 16px 0 24px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-features li {
+  font-size: 13px;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-features li::before {
+  content: '✓';
+  color: #f0c040;
+  font-weight: 700;
+}
+
+.btn-upgrade {
+  width: 100%;
+  background: linear-gradient(135deg, #f0c040, #ff8c00);
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 12px;
+  font-family: inherit;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  color: #444;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+}
+
+/* ── Payment Modal ── */
+.payment-modal {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 20px;
+  padding: 32px 28px;
+  max-width: 380px;
+  width: 90%;
+  animation: slideUp 0.3s ease;
+}
+
+.payment-modal h3 {
+  font-size: 1.3rem;
+  margin-bottom: 4px;
+  color: #f0c040;
+}
+
+.payment-modal > p {
+  color: #666;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.payment-methods {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.method-btn {
+  flex: 1;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 10px;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.method-btn.active {
+  border-color: #f0c040;
+  color: #f0c040;
+}
+
+.payment-field { margin-bottom: 14px; }
+
+.payment-field input {
+  width: 100%;
+  background: #0a0a0a;
+  border: 1px solid #222;
+  border-radius: 8px;
+  color: #fff;
+  padding: 11px 13px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+
+.payment-field input:focus { border-color: #f0c040; }
+
+.card-row { display: flex; gap: 10px; }
+.card-row > div { flex: 1; }
+
+.payment-note {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.btn-pay {
+  width: 100%;
+  background: linear-gradient(135deg, #f0c040, #ff8c00);
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 4px;
+}
+
+.secure-note {
+  font-size: 11px;
+  color: #333;
+  text-align: center;
+  margin-top: 12px;
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: #444;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 10px;
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-decoration: underline;
+}
+
+/* ── Success Modal ── */
+.success-modal {
+  background: #111;
+  border: 1px solid #1a1a1a;
+  border-radius: 20px;
+  padding: 48px 32px;
+  max-width: 340px;
+  width: 90%;
+  text-align: center;
+  animation: slideUp 0.3s ease;
+}
+
+.success-icon { font-size: 56px; margin-bottom: 16px; }
+
+.success-modal h2 {
+  font-size: 1.5rem;
+  color: #f0c040;
+  margin-bottom: 10px;
+}
+
+.success-modal p {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.btn-continue {
+  background: linear-gradient(135deg, #f0c040, #ff8c00);
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  padding: 13px 28px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}

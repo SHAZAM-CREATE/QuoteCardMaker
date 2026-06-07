@@ -8,10 +8,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quote Card Maker</title>
   <link rel="stylesheet" href="style.css">
+  <script src="config.js"></script>
 </head>
 <body>
 
   <h1>Quote Card Maker</h1>
+
+  <!-- Trial Badge -->
+  <div class="trial-badge" id="trialBadge">
+    <div class="trial-dot"></div>
+    <span id="trialText">1 Free Download Left</span>
+  </div>
 
   <div class="layout">
 
@@ -19,20 +26,20 @@
     <div class="controls">
 
       <!-- Photo Upload -->
-<div>
-  <label class="section-label">Profile Photo</label>
-  <div class="avatar-row">
-    <div class="avatar-wrap" id="avatarWrap">
-      <span id="avatarIcon">👤</span>
-      <img id="avatarPreview" alt="avatar" />
-    </div>
-    <label for="photoUpload" class="upload-btn">
-      Upload Photo
-    </label>
-    <input type="file" id="photoUpload" accept="image/*" style="display:none">
-  </div>
-  <p class="hint-text">Save your  profile pic → upload here</p>
-</div>
+      <div>
+        <label class="section-label">Profile Photo</label>
+        <div class="avatar-row">
+          <div class="avatar-wrap" id="avatarWrap">
+            <span id="avatarIcon">👤</span>
+            <img id="avatarPreview" alt="avatar" />
+          </div>
+          <label for="photoUpload" class="upload-btn">
+            Upload Photo
+          </label>
+          <input type="file" id="photoUpload" accept="image/*" style="display:none">
+        </div>
+        <p class="hint-text">Save your profile pic → upload here</p>
+      </div>
 
       <!-- Name -->
       <div>
@@ -97,7 +104,7 @@
         </select>
       </div>
 
-      <button class="btn-download" onclick="downloadCard()">⬇ Download PNG</button>
+      <button class="btn-download" id="downloadBtn">⬇ Download PNG</button>
 
     </div>
 
@@ -109,11 +116,102 @@
 
   </div>
 
+  <!-- Premium Modal -->
+  <div class="modal-overlay" id="premiumModal">
+    <div class="modal">
+      <div class="modal-icon">👑</div>
+      <h2>Go Premium</h2>
+      <p>You've used your free download. Upgrade to keep creating unlimited quote cards.</p>
+      <div class="modal-price">$3 <span>/ month</span></div>
+      <ul class="modal-features">
+        <li>Unlimited quote card downloads</li>
+        <li>All fonts and color themes</li>
+        <li>HD 1080×1080 export</li>
+        <li>Priority support</li>
+        <li>Cancel anytime</li>
+      </ul>
+      <button class="btn-upgrade" id="goToPaymentBtn">Upgrade Now — $3/month</button>
+      <button class="btn-close-modal" id="closeModalBtn">Maybe later</button>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div class="modal-overlay" id="paymentModal">
+    <div class="payment-modal">
+      <h3>Complete Payment</h3>
+      <p>$3.00 / month — cancel anytime</p>
+
+      <!-- Payment Method Choice -->
+      <div class="payment-methods">
+        <button class="method-btn active" id="mpesaBtn" onclick="selectMethod('mpesa')">🇰🇪 M-Pesa / Airtel</button>
+        <button class="method-btn" id="cardBtn" onclick="selectMethod('card')">🌍 Card (International)</button>
+      </div>
+
+      <!-- M-Pesa Section -->
+      <div id="mpesaSection">
+        <div class="payment-field">
+          <label class="section-label">M-Pesa / Airtel Money Number</label>
+          <input type="tel" id="mpesaPhone" placeholder="e.g. 0712345678">
+        </div>
+        <p class="payment-note">You will receive an STK push on your phone to confirm payment of KES 390/month.</p>
+        <button class="btn-pay" id="mpesaPayBtn">Pay with M-Pesa / Airtel</button>
+      </div>
+
+      <!-- Card Section -->
+      <div id="cardSection" style="display:none">
+        <div class="payment-field">
+          <label class="section-label">Full Name</label>
+          <input type="text" id="payName" placeholder="John Doe">
+        </div>
+        <div class="payment-field">
+          <label class="section-label">Email</label>
+          <input type="email" id="payEmail" placeholder="you@email.com">
+        </div>
+        <div class="payment-field">
+          <label class="section-label">Card Number</label>
+          <input type="text" id="payCard" placeholder="1234 5678 9012 3456" maxlength="19">
+        </div>
+        <div class="payment-field card-row">
+          <div>
+            <label class="section-label">Expiry</label>
+            <input type="text" id="payExpiry" placeholder="MM/YY" maxlength="5">
+          </div>
+          <div>
+            <label class="section-label">CVV</label>
+            <input type="text" id="payCVV" placeholder="123" maxlength="3">
+          </div>
+        </div>
+        <button class="btn-pay" id="cardPayBtn">Pay $3.00 — Unlock Premium</button>
+      </div>
+
+      <p class="secure-note">🔒 Secured payment — your details are safe</p>
+      <button class="btn-back" id="backBtn">← Go back</button>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="modal-overlay" id="successModal">
+    <div class="success-modal">
+      <div class="success-icon">🎉</div>
+      <h2>You're Premium!</h2>
+      <p>Welcome aboard. You now have unlimited downloads. Go create amazing quote cards.</p>
+      <button class="btn-continue" id="continueBtn">Start Creating</button>
+    </div>
+  </div>
+
   <script src="script.js"></script>
+
   <footer>
     <hr>
     <p>&copy;2026.CREATIVE-TECH</p>
   </footer>
-  
+
+  <!-- Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
+    }
+  </script>
+
 </body>
 </html>
