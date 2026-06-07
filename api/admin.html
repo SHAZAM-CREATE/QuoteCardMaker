@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Quote Card Maker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --border: #1e1e2e;
+      --accent: #f0c040;
+      --accent2: #4ade80;
+      --danger: #f87171;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --card-bg: #13131c;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+    }
+
+    /* ── LOGIN ── */
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      background-image: radial-gradient(ellipse at 20% 50%, rgba(240,192,64,0.05) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 20%, rgba(74,222,128,0.03) 0%, transparent 50%);
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 400px;
+      padding: 48px 40px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .login-box h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .login-box p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 32px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .field input:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-login:hover { opacity: 0.9; }
+
+    .login-error {
+      color: var(--danger);
+      font-size: 12px;
+      margin-top: 12px;
+      text-align: center;
+      display: none;
+    }
+
+    /* ── DASHBOARD ── */
+    #dashboard { display: none; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar-brand {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .topbar-brand span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 400;
+      margin-left: 10px;
+    }
+
+    .btn-logout {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-logout:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .main {
+      padding: 32px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* ── STATS ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    .stat-card.green::before { background: var(--accent2); }
+    .stat-card.red::before { background: var(--danger); }
+    .stat-card.blue::before { background: #60a5fa; }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 12px;
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .btn-refresh {
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-refresh:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      padding: 12px 20px;
+      text-align: left;
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    td {
+      padding: 14px 20px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .badge-premium {
+      background: rgba(240,192,64,0.15);
+      color: var(--accent);
+      border: 1px solid rgba(240,192,64,0.3);
+    }
+
+    .badge-free {
+      background: rgba(107,107,128,0.15);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .badge-success {
+      background: rgba(74,222,128,0.15);
+      color: var(--accent2);
+      border: 1px solid rgba(74,222,128,0.3);
+    }
+
+    .badge-failed {
+      background: rgba(248,113,113,0.15);
+      color: var(--danger);
+      border: 1px solid rgba(248,113,113,0.3);
+    }
+
+    .badge-reversed {
+      background: rgba(248,113,113,0.1);
+      color: var(--danger);
+      border: 1px solid rgba(248,113,113,0.2);
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-grant {
+      padding: 5px 12px;
+      background: rgba(74,222,128,0.1);
+      border: 1px solid rgba(74,222,128,0.3);
+      border-radius: 5px;
+      color: var(--accent2);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-grant:hover { background: rgba(74,222,128,0.2); }
+
+    .btn-revoke {
+      padding: 5px 12px;
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.3);
+      border-radius: 5px;
+      color: var(--danger);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-revoke:hover { background: rgba(248,113,113,0.2); }
+
+    .empty-state {
+      padding: 48px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .loading {
+      padding: 48px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 999;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success { border-color: var(--accent2); color: var(--accent2); }
+    .toast.error { border-color: var(--danger); color: var(--danger); }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen">
+    <div class="login-box">
+      <h1>Admin Panel</h1>
+      <p>Quote Card Maker — restricted access</p>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="admin@youremail.com">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••">
+      </div>
+      <button class="btn-login" onclick="doLogin()">Sign In →</button>
+      <p class="login-error" id="loginError">Invalid email or password.</p>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+    <div class="topbar">
+      <div class="topbar-brand">
+        ADMIN <span>Quote Card Maker</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Log Out</button>
+    </div>
+
+    <div class="main">
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Revenue</div>
+          <div class="stat-value" id="statRevenue">—</div>
+          <div class="stat-sub">KES collected</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Premium Users</div>
+          <div class="stat-value" id="statPremium">—</div>
+          <div class="stat-sub">Active subscriptions</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Total Customers</div>
+          <div class="stat-value" id="statTotal">—</div>
+          <div class="stat-sub">All time</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Reversals</div>
+          <div class="stat-value" id="statReversals">—</div>
+          <div class="stat-sub">Total reversed</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('customers')">Customers</button>
+        <button class="tab" onclick="switchTab('payments')">Payments</button>
+        <button class="tab" onclick="switchTab('reversals')">Reversals</button>
+      </div>
+
+      <!-- Customers Tab -->
+      <div class="tab-content active" id="tab-customers">
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">All Customers</div>
+            <button class="btn-refresh" onclick="loadData()">↻ Refresh</button>
+          </div>
+          <div id="customersTable"><div class="loading">Loading</div></div>
+        </div>
+      </div>
+
+      <!-- Payments Tab -->
+      <div class="tab-content" id="tab-payments">
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">Payment History</div>
+            <button class="btn-refresh" onclick="loadData()">↻ Refresh</button>
+          </div>
+          <div id="paymentsTable"><div class="loading">Loading</div></div>
+        </div>
+      </div>
+
+      <!-- Reversals Tab -->
+      <div class="tab-content" id="tab-reversals">
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">Reversals</div>
+            <button class="btn-refresh" onclick="loadData()">↻ Refresh</button>
+          </div>
+          <div id="reversalsTable"><div class="loading">Loading</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let authToken = sessionStorage.getItem('adminToken');
+
+    if (authToken) showDashboard();
+
+    async function doLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      const errEl = document.getElementById('loginError');
+      errEl.style.display = 'none';
+
+      if (!email || !password) {
+        errEl.textContent = 'Please enter email and password.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin-auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.token) {
+          sessionStorage.setItem('adminToken', data.token);
+          authToken = data.token;
+          showDashboard();
+        } else {
+          errEl.textContent = data.error || 'Invalid credentials.';
+          errEl.style.display = 'block';
+        }
+      } catch(e) {
+        errEl.textContent = 'Connection error. Try again.';
+        errEl.style.display = 'block';
+      }
+    }
+
+    function doLogout() {
+      sessionStorage.removeItem('adminToken');
+      authToken = null;
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+    }
+
+    function showDashboard() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadData();
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach((t, i) => {
+        t.classList.toggle('active', ['customers','payments','reversals'][i] === name);
+      });
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    async function loadData() {
+      try {
+        const res = await fetch('/api/admin-data', {
+          headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+        if (res.status === 401) { doLogout(); return; }
+        const data = await res.json();
+        renderStats(data);
+        renderCustomers(data.customers);
+        renderPayments(data.payments);
+        renderReversals(data.payments.filter(p => p.reversed));
+      } catch(e) {
+        showToast('Failed to load data', 'error');
+      }
+    }
+
+    function renderStats(data) {
+      const revenue = data.payments
+        .filter(p => p.status === 'success' && !p.reversed)
+        .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+      const premiumCount = data.customers.filter(c => c.is_premium).length;
+      const reversals = data.payments.filter(p => p.reversed).length;
+
+      document.getElementById('statRevenue').textContent = 'KES ' + revenue.toLocaleString();
+      document.getElementById('statPremium').textContent = premiumCount;
+      document.getElementById('statTotal').textContent = data.customers.length;
+      document.getElementById('statReversals').textContent = reversals;
+    }
+
+    function renderCustomers(customers) {
+      if (!customers.length) {
+        document.getElementById('customersTable').innerHTML = '<div class="empty-state">No customers yet.</div>';
+        return;
+      }
+      let html = '<table><thead><tr><th>Phone / Email</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead><tbody>';
+      customers.forEach(c => {
+        const date = new Date(c.created_at).toLocaleDateString();
+        const status = c.is_premium
+          ? '<span class="badge badge-premium">Premium</span>'
+          : '<span class="badge badge-free">Free</span>';
+        const actions = c.is_premium
+          ? `<div class="action-btns"><button class="btn-revoke" onclick="updatePremium('${c.id}', false)">Revoke</button></div>`
+          : `<div class="action-btns"><button class="btn-grant" onclick="updatePremium('${c.id}', true)">Grant</button></div>`;
+        html += `<tr>
+          <td>${c.email || c.phone || '—'}</td>
+          <td>${status}</td>
+          <td>${date}</td>
+          <td>${actions}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      document.getElementById('customersTable').innerHTML = html;
+    }
+
+    function renderPayments(payments) {
+      if (!payments.length) {
+        document.getElementById('paymentsTable').innerHTML = '<div class="empty-state">No payments yet.</div>';
+        return;
+      }
+      let html = '<table><thead><tr><th>Phone</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+      payments.forEach(p => {
+        const date = new Date(p.created_at).toLocaleDateString();
+        const statusBadge = p.reversed
+          ? '<span class="badge badge-reversed">Reversed</span>'
+          : p.status === 'success'
+            ? '<span class="badge badge-success">Success</span>'
+            : '<span class="badge badge-failed">Failed</span>';
+        html += `<tr>
+          <td>${p.phone || '—'}</td>
+          <td>KES ${parseFloat(p.amount || 0).toLocaleString()}</td>
+          <td>${p.method || 'M-Pesa'}</td>
+          <td>${statusBadge}</td>
+          <td>${date}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      document.getElementById('paymentsTable').innerHTML = html;
+    }
+
+    function renderReversals(reversals) {
+      if (!reversals.length) {
+        document.getElementById('reversalsTable').innerHTML = '<div class="empty-state">No reversals recorded.</div>';
+        return;
+      }
+      let html = '<table><thead><tr><th>Phone</th><th>Amount</th><th>Original Date</th><th>Reversed On</th></tr></thead><tbody>';
+      reversals.forEach(p => {
+        html += `<tr>
+          <td>${p.phone || '—'}</td>
+          <td>KES ${parseFloat(p.amount || 0).toLocaleString()}</td>
+          <td>${new Date(p.created_at).toLocaleDateString()}</td>
+          <td>${p.reversed_at ? new Date(p.reversed_at).toLocaleDateString() : '—'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      document.getElementById('reversalsTable').innerHTML = html;
+    }
+
+    async function updatePremium(customerId, grant) {
+      try {
+        const res = await fetch('/api/admin-update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + authToken
+          },
+          body: JSON.stringify({ customerId, isPremium: grant })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(grant ? 'Premium granted ✓' : 'Premium revoked ✓', 'success');
+          loadData();
+        } else {
+          showToast('Update failed', 'error');
+        }
+      } catch(e) {
+        showToast('Connection error', 'error');
+      }
+    }
+
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + (type || '');
+      setTimeout(() => t.className = 'toast', 3000);
+    }
+
+    // Enter key on login
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') {
+        doLogin();
+      }
+    });
+  </script>
+</body>
+</html>
