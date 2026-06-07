@@ -259,7 +259,7 @@ document.getElementById('mpesaPayBtn').addEventListener('click', function() {
       'Authorization': 'Bearer ' + INTASEND_PUBLIC_KEY
     },
     body: JSON.stringify({
-      phone_number: phone,
+      phone: phone,
       amount: 390,
       currency: 'KES',
       narrative: 'Quote Card Maker Premium'
