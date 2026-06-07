@@ -1,3 +1,5 @@
+const https = require('https');
+
 exports.handler = async function(event) {
   const { phone, amount } = JSON.parse(event.body);
 
@@ -7,24 +9,44 @@ exports.handler = async function(event) {
     formattedPhone = '254' + formattedPhone.substring(1);
   }
 
-  const response = await fetch('https://payment.intasend.com/api/v1/payment/mpesa-stk-push/', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + process.env.INTASEND_SECRET_KEY
-    },
-    body: JSON.stringify({
+  return new Promise((resolve) => {
+    const payload = JSON.stringify({
       phone_number: formattedPhone,
       amount: amount,
       currency: 'KES',
       narrative: 'Quote Card Maker Premium'
-    })
-  });
+    });
 
-  const data = await response.json();
-  console.log('IntaSend response:', JSON.stringify(data));
-  return {
-    statusCode: 200,
-    body: JSON.stringify(data)
-  };
+    const options = {
+      hostname: 'payment.intasend.com',
+      path: '/api/v1/payment/mpesa-stk-push/',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + process.env.INTASEND_SECRET_KEY,
+        'Content-Length': Buffer.byteLength(payload)
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        resolve({
+          statusCode: 200,
+          body: data
+        });
+      });
+    });
+
+    req.on('error', (e) => {
+      resolve({
+        statusCode: 500,
+        body: JSON.stringify({ error: e.message })
+      });
+    });
+
+    req.write(payload);
+    req.end();
+  });
 };
