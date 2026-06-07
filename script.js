@@ -1,7 +1,3 @@
-// ── IntaSend Keys (replace with your actual keys) ──
-const INTASEND_PUBLIC_KEY = '';
-const INTASEND_SECRET_KEY = '';
-
 // ── State ──
 let uploadedAvatar = null;
 let downloadsUsed = parseInt(localStorage.getItem('downloadsUsed') || '0');
@@ -254,15 +250,10 @@ document.getElementById('mpesaPayBtn').addEventListener('click', function() {
 
   fetch('/api/mpesa', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + INTASEND_PUBLIC_KEY
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       phone: phone,
-      amount: 390,
-      currency: 'KES',
-      narrative: 'Quote Card Maker Premium'
+      amount: 390
     })
   })
   .then(function(res) { return res.json(); })
@@ -303,15 +294,30 @@ document.getElementById('cardPayBtn').addEventListener('click', function() {
   this.disabled = true;
   const btn = this;
 
-  setTimeout(function() {
-    isPremium = true;
-    localStorage.setItem('isPremium', 'true');
-    updateBadge();
-    document.getElementById('paymentModal').classList.remove('active');
-    document.getElementById('successModal').classList.add('active');
+  fetch('/api/card', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, amount: 3 })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.success) {
+      isPremium = true;
+      localStorage.setItem('isPremium', 'true');
+      updateBadge();
+      document.getElementById('paymentModal').classList.remove('active');
+      document.getElementById('successModal').classList.add('active');
+    } else {
+      alert('Payment failed. Please try again.');
+    }
     btn.textContent = 'Pay $3.00 — Unlock Premium';
     btn.disabled = false;
-  }, 2000);
+  })
+  .catch(function() {
+    alert('Something went wrong. Please try again.');
+    btn.textContent = 'Pay $3.00 — Unlock Premium';
+    btn.disabled = false;
+  });
 });
 
 // ── Success ──
