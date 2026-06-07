@@ -5,14 +5,15 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
+const supabaseAuth = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+
 async function verifyToken(token) {
   if (!token) return false;
-  const { data } = await supabase
-    .from('admins')
-    .select('id')
-    .eq('last_token', token)
-    .single();
-  return !!data;
+  const { data, error } = await supabaseAuth.auth.getUser(token);
+  return !error && !!data.user;
 }
 
 module.exports = async function(req, res) {
