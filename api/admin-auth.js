@@ -7,11 +7,9 @@ const supabase = createClient(
 );
 
 function hashPassword(password) {
-  return crypto.createHash('sha256').update(password + process.env.ADMIN_SALT || 'qcm-salt-2026').digest('hex');
-}
-
-function generateToken(email) {
-  return crypto.createHash('sha256').update(email + Date.now() + (process.env.ADMIN_SALT || 'qcm-salt-2026')).digest('hex');
+  return crypto.createHash('sha256')
+    .update(password + 'qcm-salt-2026')
+    .digest('hex');
 }
 
 module.exports = async function(req, res) {
@@ -27,21 +25,26 @@ module.exports = async function(req, res) {
 
   try {
     const hashed = hashPassword(password);
+    console.log('Login attempt:', email);
+    console.log('Hash generated:', hashed);
 
     const { data, error } = await supabase
       .from('admins')
       .select('*')
-      .eq('email', email.toLowerCase())
-      .eq('password_hash', hashed)
+      .eq('email', email.toLowerCase().trim())
       .single();
 
-    if (error || !data) {
+    console.log('DB record:', data ? 'found' : 'not found');
+    if (data) console.log('Hash match:', data.password_hash === hashed);
+
+    if (error || !data || data.password_hash !== hashed) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = generateToken(email);
+    const token = crypto.createHash('sha256')
+      .update(email + Date.now() + 'qcm-salt-2026')
+      .digest('hex');
 
-    // Store token temporarily (store in admin row)
     await supabase
       .from('admins')
       .update({ last_token: token, last_login: new Date().toISOString() })
@@ -50,6 +53,7 @@ module.exports = async function(req, res) {
     return res.status(200).json({ token });
 
   } catch(e) {
-    return res.status(500).json({ error: 'Server error' });
+    console.log('Error:', e.message);
+    return res.status(500).json({ error: 'Server error: ' + e.message });
   }
 };
