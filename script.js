@@ -252,7 +252,7 @@ document.getElementById('mpesaPayBtn').addEventListener('click', function() {
   this.disabled = true;
   const btn = this;
 
-  fetch('/.netlify/functions/mpesa', {
+  fetch('/api/mpesa', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
