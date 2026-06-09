@@ -187,7 +187,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script>
-    const supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+
 
     // If already logged in, go straight to app
     supabase.auth.getSession().then(({ data }) => {
