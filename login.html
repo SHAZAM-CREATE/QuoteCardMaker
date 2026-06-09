@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Quote Card Maker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --border: #1e1e2e;
+      --accent: #f0c040;
+      --danger: #f87171;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background-image: radial-gradient(ellipse at 80% 50%, rgba(240,192,64,0.05) 0%, transparent 60%);
+    }
+    .box {
+      width: 100%;
+      max-width: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 36px;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .subtitle { color: var(--muted); font-size: 12px; margin-bottom: 28px; }
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .forgot {
+      text-align: right;
+      margin-top: -8px;
+      margin-bottom: 14px;
+    }
+    .forgot a {
+      font-size: 11px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .forgot a:hover { color: var(--accent); }
+    .btn {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .error { color: var(--danger); font-size: 11px; margin-top: 10px; text-align: center; display: none; }
+    .success { color: #4ade80; font-size: 11px; margin-top: 10px; text-align: center; display: none; }
+    .footer-link { text-align: center; margin-top: 20px; font-size: 12px; color: var(--muted); }
+    .footer-link a { color: var(--accent); text-decoration: none; }
+    .footer-link a:hover { text-decoration: underline; }
+
+    /* Reset modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 360px;
+      margin: 24px;
+    }
+    .modal h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .modal p { color: var(--muted); font-size: 12px; margin-bottom: 20px; }
+    .btn-outline {
+      width: 100%;
+      padding: 11px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="logo">Quote Card Maker</div>
+    <div class="subtitle">Welcome back</div>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="you@email.com">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••">
+    </div>
+    <div class="forgot">
+      <a href="#" onclick="openReset()">Forgot password?</a>
+    </div>
+
+    <button class="btn" id="loginBtn" onclick="doLogin()">Sign In →</button>
+    <p class="error" id="errorMsg"></p>
+    <p class="success" id="successMsg"></p>
+
+    <div class="footer-link">
+      Don't have an account? <a href="signup.html">Sign up free</a>
+    </div>
+  </div>
+
+  <!-- Reset Password Modal -->
+  <div class="modal-overlay" id="resetModal">
+    <div class="modal">
+      <h3>Reset Password</h3>
+      <p>Enter your email and we'll send you a reset link.</p>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="resetEmail" placeholder="you@email.com">
+      </div>
+      <button class="btn" onclick="doReset()">Send Reset Link →</button>
+      <p class="error" id="resetError"></p>
+      <p class="success" id="resetSuccess"></p>
+      <button class="btn-outline" onclick="closeReset()">Cancel</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script>
+    const supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+
+    // If already logged in, go straight to app
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.href = 'index.html';
+    });
+
+    async function doLogin() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const errEl = document.getElementById('errorMsg');
+      const btn = document.getElementById('loginBtn');
+
+      errEl.style.display = 'none';
+
+      if (!email || !password) {
+        errEl.textContent = 'Please enter your email and password.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        errEl.textContent = 'Invalid email or password.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Sign In →';
+        return;
+      }
+
+      // Save session and go to app
+      window.location.href = 'index.html';
+    }
+
+    function openReset() {
+      document.getElementById('resetModal').classList.add('active');
+    }
+
+    function closeReset() {
+      document.getElementById('resetModal').classList.remove('active');
+      document.getElementById('resetError').style.display = 'none';
+      document.getElementById('resetSuccess').style.display = 'none';
+    }
+
+    async function doReset() {
+      const email = document.getElementById('resetEmail').value.trim();
+      const errEl = document.getElementById('resetError');
+      const sucEl = document.getElementById('resetSuccess');
+
+      errEl.style.display = 'none';
+      sucEl.style.display = 'none';
+
+      if (!email) {
+        errEl.textContent = 'Please enter your email.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password.html'
+      });
+
+      if (error) {
+        errEl.textContent = 'Could not send reset email. Try again.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      sucEl.textContent = 'Reset link sent! Check your email.';
+      sucEl.style.display = 'block';
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  </script>
+</body>
+</html>

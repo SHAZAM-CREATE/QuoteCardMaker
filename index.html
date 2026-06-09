@@ -8,6 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quote Card Maker</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
 </head>
 <body>
 
@@ -43,7 +45,7 @@
       <!-- Name -->
       <div>
         <label class="section-label" for="nameInput">Your Name</label>
-        <input type="text" id="nameInput" value="Mybei Godwin" placeholder="e.g. John Doe">
+        <input type="text" id="nameInput" value="" placeholder="e.g. John Doe">
       </div>
 
       <!-- Quote -->
@@ -104,6 +106,7 @@
       </div>
 
       <button class="btn-download" id="downloadBtn">⬇ Download PNG</button>
+      <button class="btn-logout" id="logoutBtn" style="margin-top:10px; width:100%; padding:10px; background:transparent; border:1px solid #333; border-radius:8px; color:#666; cursor:pointer; font-size:13px;">Log Out</button>
 
     </div>
 
@@ -140,47 +143,31 @@
       <h3>Complete Payment</h3>
       <p>$3.00 / month — cancel anytime</p>
 
-      <!-- Payment Method Choice -->
-      <div class="payment-methods">
-        <button class="method-btn active" id="mpesaBtn" onclick="selectMethod('mpesa')">🇰🇪 M-Pesa / Airtel</button>
-        <button class="method-btn" id="cardBtn" onclick="selectMethod('card')">🌍 Card (International)</button>
+      <!-- KENYA: M-Pesa / Airtel -->
+      <div id="kenyaSection">
+        <div class="payment-methods">
+          <button class="method-btn active" id="mpesaBtn" onclick="selectMethod('mpesa')">📱 M-Pesa / Airtel</button>
+        </div>
+        <div id="mpesaSection">
+          <div class="payment-field">
+            <label class="section-label">M-Pesa / Airtel Money Number</label>
+            <input type="tel" id="mpesaPhone" placeholder="e.g. 0712345678">
+          </div>
+          <p class="payment-note">You will receive an STK push on your phone to confirm payment of KES 390/month.</p>
+          <button class="btn-pay" id="mpesaPayBtn">Pay with M-Pesa / Airtel</button>
+        </div>
       </div>
 
-      <!-- M-Pesa Section -->
-      <div id="mpesaSection">
-        <div class="payment-field">
-          <label class="section-label">M-Pesa / Airtel Money Number</label>
-          <input type="tel" id="mpesaPhone" placeholder="e.g. 0712345678">
-        </div>
-        <p class="payment-note">You will receive an STK push on your phone to confirm payment of KES 390/month.</p>
-        <button class="btn-pay" id="mpesaPayBtn">Pay with M-Pesa / Airtel</button>
+      <!-- OTHER AFRICA: Blue Pay -->
+      <div id="africaSection" style="display:none">
+        <p class="payment-note" style="margin-bottom:16px;">You will be redirected to our secure African payment checkout to complete your payment.</p>
+        <button class="btn-pay" id="africaPayBtn">Pay via Blue Pay →</button>
       </div>
 
-      <!-- Card Section -->
-      <div id="cardSection" style="display:none">
-        <div class="payment-field">
-          <label class="section-label">Full Name</label>
-          <input type="text" id="payName" placeholder="John Doe">
-        </div>
-        <div class="payment-field">
-          <label class="section-label">Email</label>
-          <input type="email" id="payEmail" placeholder="you@email.com">
-        </div>
-        <div class="payment-field">
-          <label class="section-label">Card Number</label>
-          <input type="text" id="payCard" placeholder="1234 5678 9012 3456" maxlength="19">
-        </div>
-        <div class="payment-field card-row">
-          <div>
-            <label class="section-label">Expiry</label>
-            <input type="text" id="payExpiry" placeholder="MM/YY" maxlength="5">
-          </div>
-          <div>
-            <label class="section-label">CVV</label>
-            <input type="text" id="payCVV" placeholder="123" maxlength="3">
-          </div>
-        </div>
-        <button class="btn-pay" id="cardPayBtn">Pay $3.00 — Unlock Premium</button>
+      <!-- REST OF WORLD: Chariow -->
+      <div id="worldSection" style="display:none">
+        <p class="payment-note" style="margin-bottom:16px;">You will be redirected to our secure international checkout to complete your payment.</p>
+        <button class="btn-pay" id="worldPayBtn">Pay via International Checkout →</button>
       </div>
 
       <p class="secure-note">🔒 Secured payment — your details are safe</p>

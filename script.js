@@ -1,11 +1,61 @@
+// ── Supabase ──
+const _supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+
+// ── African countries (non-Kenya) ──
+const AFRICA_COUNTRIES = ['UG','TZ','NG','GH','ZA','ET','EG','RW','SN','CI','CM','ZM','ZW','MZ','MA','TN','AO','MG','BF','ML','MW','NE','SD','SO','SS','TD','DJ','ER','KM','LS','LR','LY','MR','MU','NA','SC','SL','ST','SZ','TO','TG','GM','GN','GW','CV','BJ','BI','CF','CG','CD','GA','GQ'];
+
 // ── State ──
 let uploadedAvatar = null;
 let downloadsUsed = parseInt(localStorage.getItem('downloadsUsed') || '0');
 let isPremium = localStorage.getItem('isPremium') === 'true';
+let userCountry = '';
+let currentUser = null;
 const FREE_LIMIT = 1;
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+
+// ── Auth Check ──
+async function initAuth() {
+  const { data } = await _supabase.auth.getSession();
+  if (!data.session) {
+    window.location.href = 'login.html';
+    return;
+  }
+
+  currentUser = data.session.user;
+
+  // Get user profile from customers table
+  const { data: profile } = await _supabase
+    .from('customers')
+    .select('*')
+    .eq('id', currentUser.id)
+    .single();
+
+  if (profile) {
+    userCountry = profile.country || '';
+    isPremium = profile.is_premium || false;
+    localStorage.setItem('isPremium', isPremium);
+
+    // Pre-fill name
+    if (profile.full_name) {
+      document.getElementById('nameInput').value = profile.full_name;
+    }
+  }
+
+  updateBadge();
+  renderCard();
+}
+
+initAuth();
+
+// ── Logout ──
+document.getElementById('logoutBtn').addEventListener('click', async function() {
+  await _supabase.auth.signOut();
+  localStorage.removeItem('isPremium');
+  localStorage.removeItem('downloadsUsed');
+  window.location.href = 'login.html';
+});
 
 // ── Trial Badge ──
 function updateBadge() {
@@ -18,8 +68,6 @@ function updateBadge() {
     badge.textContent = left + ' Free Download' + (left === 1 ? '' : 's') + ' Left';
   }
 }
-
-updateBadge();
 
 // ── Photo Upload ──
 document.getElementById('photoUpload').addEventListener('change', function(e) {
@@ -60,18 +108,6 @@ document.getElementById('textPreset').addEventListener('change', function(e) {
 document.getElementById('fontSize').addEventListener('input', function(e) {
   document.getElementById('fsVal').textContent = e.target.value;
   renderCard();
-});
-
-// ── Card number formatting ──
-document.getElementById('payCard').addEventListener('input', function(e) {
-  let v = e.target.value.replace(/\D/g, '').substring(0, 16);
-  e.target.value = v.replace(/(.{4})/g, '$1 ').trim();
-});
-
-document.getElementById('payExpiry').addEventListener('input', function(e) {
-  let v = e.target.value.replace(/\D/g, '').substring(0, 4);
-  if (v.length >= 2) v = v.substring(0, 2) + '/' + v.substring(2);
-  e.target.value = v;
 });
 
 // ── Helpers ──
@@ -186,7 +222,7 @@ function renderCard(forDownload) {
 // ── Download with paywall ──
 document.getElementById('downloadBtn').addEventListener('click', function() {
   if (!isPremium && downloadsUsed >= FREE_LIMIT) {
-    document.getElementById('premiumModal').classList.add('active');
+    showPaymentModal();
     return;
   }
   doDownload();
@@ -206,18 +242,26 @@ function doDownload() {
   setTimeout(function() { renderCard(false); }, 100);
 }
 
-// ── Payment method toggle ──
-function selectMethod(method) {
-  if (method === 'mpesa') {
-    document.getElementById('mpesaSection').style.display = 'block';
-    document.getElementById('cardSection').style.display = 'none';
-    document.getElementById('mpesaBtn').classList.add('active');
-    document.getElementById('cardBtn').classList.remove('active');
+// ── Show correct payment modal based on country ──
+function showPaymentModal() {
+  document.getElementById('premiumModal').classList.add('active');
+}
+
+function showPaymentOptions() {
+  document.getElementById('premiumModal').classList.remove('active');
+  document.getElementById('paymentModal').classList.add('active');
+
+  // Hide all sections first
+  document.getElementById('kenyaSection').style.display = 'none';
+  document.getElementById('africaSection').style.display = 'none';
+  document.getElementById('worldSection').style.display = 'none';
+
+  if (userCountry === 'KE') {
+    document.getElementById('kenyaSection').style.display = 'block';
+  } else if (AFRICA_COUNTRIES.includes(userCountry)) {
+    document.getElementById('africaSection').style.display = 'block';
   } else {
-    document.getElementById('mpesaSection').style.display = 'none';
-    document.getElementById('cardSection').style.display = 'block';
-    document.getElementById('cardBtn').classList.add('active');
-    document.getElementById('mpesaBtn').classList.remove('active');
+    document.getElementById('worldSection').style.display = 'block';
   }
 }
 
@@ -226,17 +270,14 @@ document.getElementById('closeModalBtn').addEventListener('click', function() {
   document.getElementById('premiumModal').classList.remove('active');
 });
 
-document.getElementById('goToPaymentBtn').addEventListener('click', function() {
-  document.getElementById('premiumModal').classList.remove('active');
-  document.getElementById('paymentModal').classList.add('active');
-});
+document.getElementById('goToPaymentBtn').addEventListener('click', showPaymentOptions);
 
 document.getElementById('backBtn').addEventListener('click', function() {
   document.getElementById('paymentModal').classList.remove('active');
   document.getElementById('premiumModal').classList.add('active');
 });
 
-// ── M-Pesa Payment via IntaSend ──
+// ── M-Pesa Payment (Kenya) ──
 document.getElementById('mpesaPayBtn').addEventListener('click', function() {
   const phone = document.getElementById('mpesaPhone').value.trim();
   if (!phone || phone.length < 10) {
@@ -251,19 +292,12 @@ document.getElementById('mpesaPayBtn').addEventListener('click', function() {
   fetch('/api/mpesa', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      phone: phone,
-      amount: 390
-    })
+    body: JSON.stringify({ phone: phone, amount: 390 })
   })
   .then(function(res) { return res.json(); })
   .then(function(data) {
     if (data.invoice || data.success) {
-      isPremium = true;
-      localStorage.setItem('isPremium', 'true');
-      updateBadge();
-      document.getElementById('paymentModal').classList.remove('active');
-      document.getElementById('successModal').classList.add('active');
+      activatePremium();
     } else {
       alert('Payment failed. Please try again.');
     }
@@ -277,48 +311,53 @@ document.getElementById('mpesaPayBtn').addEventListener('click', function() {
   });
 });
 
-// ── Card Payment ──
-document.getElementById('cardPayBtn').addEventListener('click', function() {
-  const name = document.getElementById('payName').value.trim();
-  const email = document.getElementById('payEmail').value.trim();
-  const card = document.getElementById('payCard').value.trim();
-  const expiry = document.getElementById('payExpiry').value.trim();
-  const cvv = document.getElementById('payCVV').value.trim();
+// ── Blue Pay (Other Africa) ──
+document.getElementById('africaPayBtn').addEventListener('click', function() {
+  // Store pending premium flag — will activate on return
+  localStorage.setItem('pendingPremium', 'true');
+  window.open(CONFIG.checkoutAfrica, '_blank');
+  // Show waiting message
+  this.textContent = 'Complete payment in the new tab →';
+  // Check every 3 seconds if they completed
+  const check = setInterval(function() {
+    if (localStorage.getItem('pendingPremium') === 'done') {
+      clearInterval(check);
+      activatePremium();
+    }
+  }, 3000);
+});
 
-  if (!name || !email || card.length < 19 || expiry.length < 5 || cvv.length < 3) {
-    alert('Please fill in all payment details correctly.');
-    return;
+// ── Chariow (Rest of world) ──
+document.getElementById('worldPayBtn').addEventListener('click', function() {
+  localStorage.setItem('pendingPremium', 'true');
+  window.open(CONFIG.checkoutWorld, '_blank');
+  this.textContent = 'Complete payment in the new tab →';
+  const check = setInterval(function() {
+    if (localStorage.getItem('pendingPremium') === 'done') {
+      clearInterval(check);
+      activatePremium();
+    }
+  }, 3000);
+});
+
+// ── Activate Premium ──
+async function activatePremium() {
+  isPremium = true;
+  localStorage.setItem('isPremium', 'true');
+  localStorage.removeItem('pendingPremium');
+  updateBadge();
+
+  // Update in Supabase
+  if (currentUser) {
+    await _supabase
+      .from('customers')
+      .update({ is_premium: true, premium_granted_at: new Date().toISOString() })
+      .eq('id', currentUser.id);
   }
 
-  this.textContent = 'Processing...';
-  this.disabled = true;
-  const btn = this;
-
-  fetch('/api/card', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email, amount: 3 })
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(data) {
-    if (data.success) {
-      isPremium = true;
-      localStorage.setItem('isPremium', 'true');
-      updateBadge();
-      document.getElementById('paymentModal').classList.remove('active');
-      document.getElementById('successModal').classList.add('active');
-    } else {
-      alert('Payment failed. Please try again.');
-    }
-    btn.textContent = 'Pay $3.00 — Unlock Premium';
-    btn.disabled = false;
-  })
-  .catch(function() {
-    alert('Something went wrong. Please try again.');
-    btn.textContent = 'Pay $3.00 — Unlock Premium';
-    btn.disabled = false;
-  });
-});
+  document.getElementById('paymentModal').classList.remove('active');
+  document.getElementById('successModal').classList.add('active');
+}
 
 // ── Success ──
 document.getElementById('continueBtn').addEventListener('click', function() {
@@ -326,5 +365,9 @@ document.getElementById('continueBtn').addEventListener('click', function() {
   doDownload();
 });
 
-// ── Init ──
-renderCard();
+// ── Check if returning from checkout ──
+// Add ?premium=success to your checkout redirect URL to auto-activate
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('premium') === 'success') {
+  activatePremium();
+}

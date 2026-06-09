@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — Quote Card Maker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --border: #1e1e2e;
+      --accent: #f0c040;
+      --danger: #f87171;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background-image: radial-gradient(ellipse at 20% 50%, rgba(240,192,64,0.05) 0%, transparent 60%);
+    }
+    .box {
+      width: 100%;
+      max-width: 440px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 36px;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 28px;
+    }
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+    .field input, .field select {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--accent); }
+    .field select option { background: var(--bg); }
+    .btn {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .error {
+      color: var(--danger);
+      font-size: 11px;
+      margin-top: 10px;
+      text-align: center;
+      display: none;
+    }
+    .success {
+      color: #4ade80;
+      font-size: 11px;
+      margin-top: 10px;
+      text-align: center;
+      display: none;
+    }
+    .footer-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .footer-link a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .footer-link a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="logo">Quote Card Maker</div>
+    <div class="subtitle">Create your free account</div>
+
+    <div class="field">
+      <label>Full Name</label>
+      <input type="text" id="fullName" placeholder="e.g. John Doe">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="you@email.com">
+    </div>
+    <div class="field">
+      <label>Phone Number</label>
+      <input type="tel" id="phone" placeholder="e.g. 0712345678">
+    </div>
+    <div class="field">
+      <label>Country</label>
+      <select id="country">
+        <option value="">-- Select your country --</option>
+        <option value="KE">🇰🇪 Kenya</option>
+        <option value="UG">🇺🇬 Uganda</option>
+        <option value="TZ">🇹🇿 Tanzania</option>
+        <option value="US">🇺🇸 United States</option>
+        <option value="GB">🇬🇧 United Kingdom</option>
+        <option value="CA">🇨🇦 Canada</option>
+        <option value="AU">🇦🇺 Australia</option>
+        <option value="NG">🇳🇬 Nigeria</option>
+        <option value="GH">🇬🇭 Ghana</option>
+        <option value="CM">🇹🇿 Cameroon</option>
+        <option value="ZA">🇿🇦 South Africa</option>
+        <option value="OTHER">🌍 Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Min 6 characters">
+    </div>
+    <div class="field">
+      <label>Confirm Password</label>
+      <input type="password" id="confirmPassword" placeholder="Repeat your password">
+    </div>
+
+    <button class="btn" id="signupBtn" onclick="doSignup()">Create Account →</button>
+    <p class="error" id="errorMsg"></p>
+    <p class="success" id="successMsg"></p>
+
+    <div class="footer-link">
+      Already have an account? <a href="login.html">Sign in</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script>
+    const supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+
+    async function doSignup() {
+      const fullName = document.getElementById('fullName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const country = document.getElementById('country').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const errEl = document.getElementById('errorMsg');
+      const sucEl = document.getElementById('successMsg');
+      const btn = document.getElementById('signupBtn');
+
+      errEl.style.display = 'none';
+      sucEl.style.display = 'none';
+
+      if (!fullName || !email || !phone || !country || !password || !confirmPassword) {
+        errEl.textContent = 'Please fill in all fields.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (password.length < 6) {
+        errEl.textContent = 'Password must be at least 6 characters.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (password !== confirmPassword) {
+        errEl.textContent = 'Passwords do not match.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
+
+      try {
+        // Check if phone already exists
+        const { data: existingPhone } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('phone', phone)
+          .single();
+
+        if (existingPhone) {
+          errEl.textContent = 'An account with this phone number already exists.';
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Create Account →';
+          return;
+        }
+
+        // Sign up with Supabase Auth
+        const { data, error } = await supabase.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              full_name: fullName,
+              phone: phone,
+              country: country
+            }
+          }
+        });
+
+        if (error) {
+          if (error.message.includes('already registered')) {
+            errEl.textContent = 'An account with this email already exists.';
+          } else {
+            errEl.textContent = error.message;
+          }
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Create Account →';
+          return;
+        }
+
+        // Save to customers table
+        if (data.user) {
+          await supabase.from('customers').insert({
+            id: data.user.id,
+            email: email,
+            phone: phone,
+            country: country,
+            full_name: fullName,
+            is_premium: false
+          });
+        }
+
+        sucEl.textContent = 'Account created! Redirecting to login...';
+        sucEl.style.display = 'block';
+        setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+
+      } catch(e) {
+        errEl.textContent = 'Something went wrong. Please try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Create Account →';
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doSignup();
+    });
+  </script>
+</body>
+</html>
