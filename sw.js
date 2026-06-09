@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quotecard-v2';
+const CACHE_NAME = 'quotecard-v3';
 const FILES_TO_CACHE = [
   './',
   './index.html',
