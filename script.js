@@ -19,7 +19,7 @@ const ctx = canvas.getContext('2d');
 async function initAuth() {
   const { data } = await _supabase.auth.getSession();
   if (!data.session) {
-    window.location.href = 'login.html';
+    window.location.href = 'signup.html';
     return;
   }
 
