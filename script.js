@@ -296,13 +296,15 @@ document.getElementById('mpesaPayBtn').addEventListener('click', function() {
   })
   .then(function(res) { return res.json(); })
   .then(function(data) {
-    if (data.invoice || data.success) {
-      activatePremium();
+    if (data.invoice_id) {
+      // STK push sent — now poll for confirmation
+      btn.textContent = '⏳ Waiting for PIN confirmation...';
+      pollPaymentStatus(data.invoice_id, btn);
     } else {
-      alert('Payment failed. Please try again.');
+      alert('Failed to send STK push. Please try again.');
+      btn.textContent = 'Pay with M-Pesa / Airtel';
+      btn.disabled = false;
     }
-    btn.textContent = 'Pay with M-Pesa / Airtel';
-    btn.disabled = false;
   })
   .catch(function() {
     alert('Something went wrong. Please try again.');
@@ -311,6 +313,37 @@ document.getElementById('mpesaPayBtn').addEventListener('click', function() {
   });
 });
 
+// ── Poll IntaSend until payment confirmed or timeout ──
+function pollPaymentStatus(invoiceId, btn) {
+  let attempts = 0;
+  const maxAttempts = 20; // 20 x 3s = 60 seconds timeout
+
+  const interval = setInterval(function() {
+    attempts++;
+
+    fetch('/api/mpesa?invoice_id=' + invoiceId)
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.completed) {
+          clearInterval(interval);
+          activatePremium();
+          btn.textContent = 'Pay with M-Pesa / Airtel';
+          btn.disabled = false;
+        } else if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          alert('Payment not confirmed. If you entered your PIN, please wait a moment and refresh. Contact support if the issue persists.');
+          btn.textContent = 'Pay with M-Pesa / Airtel';
+          btn.disabled = false;
+        }
+      })
+      .catch(function() {
+        clearInterval(interval);
+        btn.textContent = 'Pay with M-Pesa / Airtel';
+        btn.disabled = false;
+      });
+
+  }, 3000); // check every 3 seconds
+}
 // ── Blue Pay (Other Africa) ──
 document.getElementById('africaPayBtn').addEventListener('click', function() {
   // Store pending premium flag — will activate on return
