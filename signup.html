@@ -166,10 +166,10 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="config.js"></script>
   <script>
-    const supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+    const supabase = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
 
     async function doSignup() {
       const fullName = document.getElementById('fullName').value.trim();
