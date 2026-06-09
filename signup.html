@@ -201,8 +201,7 @@
       }
 
       btn.disabled = true;
-      btn.textContent = 'Creating account...';
-
+      btn.textContent = 'Creating account......'
       try {
         // Check if phone already exists
         const { data: existingPhone } = await supabase
@@ -261,7 +260,7 @@
         setTimeout(() => { window.location.href = 'login.html'; }, 2000);
 
       } catch(e) {
-        errEl.textContent = 'Something went wrong. Please try again.';
+  errEl.textContent = 'Error: ' + e.message;
         errEl.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Create Account →';
