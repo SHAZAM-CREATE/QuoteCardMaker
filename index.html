@@ -142,31 +142,37 @@
       <h3>Complete Payment</h3>
       <p>$3.00 / month — cancel anytime</p>
 
-      <!-- KENYA: M-Pesa -->
-      <div id="kenyaSection">
-        <div class="payment-methods">
-          <button class="method-btn active" id="mpesaBtn" onclick="selectMethod('mpesa')">📱 M-Pesa / Airtel</button>
-        </div>
-        <div id="mpesaSection">
+      <div id="paymentSections">
+
+        <!-- KENYA: M-Pesa / Airtel -->
+        <div id="kenyaSection" class="pay-section">
+          <div class="pay-section-label">📱 M-Pesa / Airtel Money <span class="pay-tag">Kenya</span></div>
           <div class="payment-field">
-            <label class="section-label">M-Pesa / Airtel Money Number</label>
+            <label class="section-label">Phone Number</label>
             <input type="tel" id="mpesaPhone" placeholder="e.g. 0712345678">
           </div>
-          <p class="payment-note">You will receive an STK push on your phone to confirm payment of KES 390/month.</p>
-          <button class="btn-pay" id="mpesaPayBtn">Pay with M-Pesa / Airtel</button>
+          <p class="payment-note">Enter your M-Pesa or Airtel Money number. You'll receive an STK push to enter your PIN — KES 390/month.</p>
+          <button class="btn-pay" id="mpesaPayBtn">Pay KES 390 via M-Pesa / Airtel →</button>
         </div>
-      </div>
 
-      <!-- OTHER AFRICA -->
-      <div id="africaSection" style="display:none">
-        <p class="payment-note" style="margin-bottom:16px;">You will be redirected to our secure African payment checkout to complete your payment.</p>
-        <button class="btn-pay" id="africaPayBtn">Pay via Blue Pay →</button>
-      </div>
+        <div class="pay-divider"></div>
 
-      <!-- REST OF WORLD -->
-      <div id="worldSection" style="display:none">
-        <p class="payment-note" style="margin-bottom:16px;">You will be redirected to our secure international checkout to complete your payment.</p>
-        <button class="btn-pay" id="worldPayBtn">Pay via International Checkout →</button>
+        <!-- OTHER AFRICA: Blue Pay -->
+        <div id="africaSection" class="pay-section">
+          <div class="pay-section-label">🌍 Blue Pay Checkout <span class="pay-tag">Africa</span></div>
+          <p class="payment-note">Secure African payment gateway — supports mobile money, cards, and more across Africa.</p>
+          <button class="btn-pay btn-pay-outline" id="africaPayBtn">Pay via Blue Pay →</button>
+        </div>
+
+        <div class="pay-divider"></div>
+
+        <!-- REST OF WORLD: Chariow -->
+        <div id="worldSection" class="pay-section">
+          <div class="pay-section-label">💳 International Checkout <span class="pay-tag">Worldwide</span></div>
+          <p class="payment-note">Secure international checkout — supports Visa, Mastercard, and more.</p>
+          <button class="btn-pay btn-pay-outline" id="worldPayBtn">Pay via International Checkout →</button>
+        </div>
+
       </div>
 
       <p class="secure-note">🔒 Secured payment — your details are safe</p>

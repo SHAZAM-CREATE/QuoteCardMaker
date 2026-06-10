@@ -263,17 +263,24 @@ function showPaymentOptions() {
   document.getElementById('premiumModal').classList.remove('active');
   document.getElementById('paymentModal').classList.add('active');
 
-  document.getElementById('kenyaSection').style.display = 'none';
-  document.getElementById('africaSection').style.display = 'none';
-  document.getElementById('worldSection').style.display = 'none';
+  // Always show all three — but highlight the recommended one for their country
+  document.getElementById('kenyaSection').style.display = 'block';
+  document.getElementById('africaSection').style.display = 'block';
+  document.getElementById('worldSection').style.display = 'block';
 
+  // Move the recommended section to the top
+  const container = document.getElementById('paymentSections');
+  if (!container) return;
+
+  let first;
   if (userCountry === 'KE') {
-    document.getElementById('kenyaSection').style.display = 'block';
+    first = document.getElementById('kenyaSection');
   } else if (AFRICA_COUNTRIES.includes(userCountry)) {
-    document.getElementById('africaSection').style.display = 'block';
+    first = document.getElementById('africaSection');
   } else {
-    document.getElementById('worldSection').style.display = 'block';
+    first = document.getElementById('worldSection');
   }
+  if (first) container.prepend(first);
 }
 
 // ── selectMethod (used inline in HTML) ──
