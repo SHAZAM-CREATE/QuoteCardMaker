@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — Quote Card Maker</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -537,9 +539,12 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    let authToken = sessionStorage.getItem('adminToken');
+    const db = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
 
-    if (authToken) showDashboard();
+    // Check if already logged in
+    db.auth.getSession().then(({ data }) => {
+      if (data.session) showDashboard();
+    });
 
     async function doLogin() {
       const email = document.getElementById('loginEmail').value.trim();
@@ -554,29 +559,21 @@
       }
 
       try {
-        const res = await fetch('/api/admin-auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        if (data.token) {
-          sessionStorage.setItem('adminToken', data.token);
-          authToken = data.token;
-          showDashboard();
-        } else {
-          errEl.textContent = data.error || 'Invalid credentials.';
+        const { data, error } = await db.auth.signInWithPassword({ email, password });
+        if (error || !data.session) {
+          errEl.textContent = 'Invalid email or password.';
           errEl.style.display = 'block';
+          return;
         }
+        showDashboard();
       } catch(e) {
         errEl.textContent = 'Connection error. Try again.';
         errEl.style.display = 'block';
       }
     }
 
-    function doLogout() {
-      sessionStorage.removeItem('adminToken');
-      authToken = null;
+    async function doLogout() {
+      await db.auth.signOut();
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('loginScreen').style.display = 'flex';
     }
@@ -597,28 +594,33 @@
 
     async function loadData() {
       try {
-        const res = await fetch('/api/admin-data', {
-          headers: { 'Authorization': 'Bearer ' + authToken }
-        });
-        if (res.status === 401) { doLogout(); return; }
-        const data = await res.json();
-        renderStats(data);
-        renderCustomers(data.customers);
-        renderPayments(data.payments);
-        renderReversals(data.payments.filter(p => p.reversed));
+        const [{ data: customers }, { data: payments }] = await Promise.all([
+          db.from('customers').select('*').order('created_at', { ascending: false }),
+          db.from('payments').select('*').order('created_at', { ascending: false })
+        ]);
+        renderStats({ customers: customers || [], payments: payments || [] });
+        renderCustomers(customers || []);
+        renderPayments(payments || []);
+        renderReversals((payments || []).filter(p => p.reversed));
       } catch(e) {
         showToast('Failed to load data', 'error');
       }
     }
 
     function renderStats(data) {
-      const revenue = data.payments
-        .filter(p => p.status === 'success' && !p.reversed)
-        .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+      const successPayments = data.payments.filter(p => p.status === 'success' && !p.reversed);
+      const kesRevenue = successPayments.filter(p => p.currency === 'KES').reduce((s, p) => s + parseFloat(p.amount || 0), 0);
+      const usdRevenue = successPayments.filter(p => p.currency !== 'KES').reduce((s, p) => s + parseFloat(p.amount || 0), 0);
+      let revenueStr = '';
+      if (kesRevenue > 0) revenueStr += 'KES ' + kesRevenue.toLocaleString();
+      if (usdRevenue > 0) revenueStr += (revenueStr ? ' · ' : '') + '$' + usdRevenue.toFixed(2);
+      if (!revenueStr) revenueStr = '0';
+
       const premiumCount = data.customers.filter(c => c.is_premium).length;
       const reversals = data.payments.filter(p => p.reversed).length;
 
-      document.getElementById('statRevenue').textContent = 'KES ' + revenue.toLocaleString();
+      document.getElementById('statRevenue').textContent = revenueStr;
+      document.getElementById('statRevenue').style.fontSize = revenueStr.length > 12 ? '18px' : '';
       document.getElementById('statPremium').textContent = premiumCount;
       document.getElementById('statTotal').textContent = data.customers.length;
       document.getElementById('statReversals').textContent = reversals;
@@ -629,17 +631,20 @@
         document.getElementById('customersTable').innerHTML = '<div class="empty-state">No customers yet.</div>';
         return;
       }
-      let html = '<table><thead><tr><th>Phone / Email</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead><tbody>';
+      let html = '<table><thead><tr><th>Name</th><th>Email / Phone</th><th>Country</th><th>Downloads</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead><tbody>';
       customers.forEach(c => {
         const date = new Date(c.created_at).toLocaleDateString();
         const status = c.is_premium
-          ? '<span class="badge badge-premium">Premium</span>'
+          ? '<span class="badge badge-premium">⭐ Premium</span>'
           : '<span class="badge badge-free">Free</span>';
         const actions = c.is_premium
           ? `<div class="action-btns"><button class="btn-revoke" onclick="updatePremium('${c.id}', false)">Revoke</button></div>`
           : `<div class="action-btns"><button class="btn-grant" onclick="updatePremium('${c.id}', true)">Grant</button></div>`;
         html += `<tr>
-          <td>${c.email || c.phone || '—'}</td>
+          <td>${c.full_name || '—'}</td>
+          <td style="font-size:12px">${c.email || '—'}<br><span style="color:var(--muted)">${c.phone || ''}</span></td>
+          <td>${c.country || '—'}</td>
+          <td style="text-align:center">${c.downloads_used || 0}</td>
           <td>${status}</td>
           <td>${date}</td>
           <td>${actions}</td>
@@ -654,17 +659,21 @@
         document.getElementById('paymentsTable').innerHTML = '<div class="empty-state">No payments yet.</div>';
         return;
       }
-      let html = '<table><thead><tr><th>Phone</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+      let html = '<table><thead><tr><th>Email / Phone</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th></tr></thead><tbody>';
       payments.forEach(p => {
         const date = new Date(p.created_at).toLocaleDateString();
         const statusBadge = p.reversed
           ? '<span class="badge badge-reversed">Reversed</span>'
           : p.status === 'success'
             ? '<span class="badge badge-success">Success</span>'
-            : '<span class="badge badge-failed">Failed</span>';
+            : '<span class="badge badge-failed">Pending</span>';
+        const currency = p.currency || 'KES';
+        const amountStr = currency === 'KES'
+          ? 'KES ' + parseFloat(p.amount || 0).toLocaleString()
+          : '$' + parseFloat(p.amount || 0).toFixed(2);
         html += `<tr>
-          <td>${p.phone || '—'}</td>
-          <td>KES ${parseFloat(p.amount || 0).toLocaleString()}</td>
+          <td style="font-size:12px">${p.email || '—'}<br><span style="color:var(--muted)">${p.phone || ''}</span></td>
+          <td>${amountStr}</td>
           <td>${p.method || 'M-Pesa'}</td>
           <td>${statusBadge}</td>
           <td>${date}</td>
@@ -694,20 +703,19 @@
 
     async function updatePremium(customerId, grant) {
       try {
-        const res = await fetch('/api/admin-update', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + authToken
-          },
-          body: JSON.stringify({ customerId, isPremium: grant })
-        });
-        const data = await res.json();
-        if (data.success) {
+        const { error } = await db
+          .from('customers')
+          .update({
+            is_premium: grant,
+            premium_granted_at: grant ? new Date().toISOString() : null
+          })
+          .eq('id', customerId);
+
+        if (error) {
+          showToast('Update failed: ' + error.message, 'error');
+        } else {
           showToast(grant ? 'Premium granted ✓' : 'Premium revoked ✓', 'success');
           loadData();
-        } else {
-          showToast('Update failed', 'error');
         }
       } catch(e) {
         showToast('Connection error', 'error');

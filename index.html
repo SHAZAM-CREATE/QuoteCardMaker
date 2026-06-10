@@ -7,6 +7,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quote Card Maker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
@@ -34,9 +35,7 @@
             <span id="avatarIcon">👤</span>
             <img id="avatarPreview" alt="avatar" />
           </div>
-          <label for="photoUpload" class="upload-btn">
-            Upload Photo
-          </label>
+          <label for="photoUpload" class="upload-btn">Upload Photo</label>
           <input type="file" id="photoUpload" accept="image/*" style="display:none">
         </div>
         <p class="hint-text">Save your profile pic → upload here</p>
@@ -106,7 +105,7 @@
       </div>
 
       <button class="btn-download" id="downloadBtn">⬇ Download PNG</button>
-      <button class="btn-logout" id="logoutBtn" style="margin-top:10px; width:100%; padding:10px; background:transparent; border:1px solid #333; border-radius:8px; color:#666; cursor:pointer; font-size:13px;">Log Out</button>
+      <button class="btn-logout" id="logoutBtn">Log Out</button>
 
     </div>
 
@@ -143,7 +142,7 @@
       <h3>Complete Payment</h3>
       <p>$3.00 / month — cancel anytime</p>
 
-      <!-- KENYA: M-Pesa / Airtel -->
+      <!-- KENYA: M-Pesa -->
       <div id="kenyaSection">
         <div class="payment-methods">
           <button class="method-btn active" id="mpesaBtn" onclick="selectMethod('mpesa')">📱 M-Pesa / Airtel</button>
@@ -158,13 +157,13 @@
         </div>
       </div>
 
-      <!-- OTHER AFRICA: Blue Pay -->
+      <!-- OTHER AFRICA -->
       <div id="africaSection" style="display:none">
         <p class="payment-note" style="margin-bottom:16px;">You will be redirected to our secure African payment checkout to complete your payment.</p>
         <button class="btn-pay" id="africaPayBtn">Pay via Blue Pay →</button>
       </div>
 
-      <!-- REST OF WORLD: Chariow -->
+      <!-- REST OF WORLD -->
       <div id="worldSection" style="display:none">
         <p class="payment-note" style="margin-bottom:16px;">You will be redirected to our secure international checkout to complete your payment.</p>
         <button class="btn-pay" id="worldPayBtn">Pay via International Checkout →</button>
@@ -189,10 +188,9 @@
 
   <footer>
     <hr>
-    <p>&copy;2026.CREATIVE-TECH</p>
+    <p>&copy;2026 · CREATIVE-TECH</p>
   </footer>
 
-  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');

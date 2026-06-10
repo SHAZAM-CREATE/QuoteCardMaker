@@ -1,201 +1,421 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up — Quote Card Maker</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #0a0a0f; --surface: #111118; --border: #1e1e2e;
-      --accent: #f0c040; --danger: #f87171; --text: #e8e8f0; --muted: #6b6b80;
+// ── Init Supabase ──
+const _supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+
+// ── African countries (non-Kenya) ──
+const AFRICA_COUNTRIES = ['UG','TZ','NG','GH','ZA','ET','EG','RW','SN','CI','CM','ZM','ZW','MZ','MA','TN','AO','MG','BF','ML','MW','NE','SD','SO','SS','TD','DJ','ER','KM','LS','LR','LY','MR','MU','NA','SC','SL','ST','SZ','TO','TG','GM','GN','GW','CV','BJ','BI','CF','CG','CD','GA','GQ'];
+
+// ── State ──
+let uploadedAvatar = null;
+let isPremium = false;
+let userCountry = '';
+let currentUser = null;
+let downloadsUsed = 0;
+const FREE_LIMIT = 1;
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// ── Auth Check ──
+async function initAuth() {
+  const { data } = await _supabase.auth.getSession();
+  if (!data.session) {
+    window.location.href = 'signup.html';
+    return;
+  }
+
+  currentUser = data.session.user;
+
+  // Get profile from customers table
+  const { data: profile } = await _supabase
+    .from('customers')
+    .select('*')
+    .eq('id', currentUser.id)
+    .single();
+
+  if (profile) {
+    userCountry = profile.country || '';
+    isPremium = !!profile.is_premium;
+    downloadsUsed = profile.downloads_used || 0;
+
+    if (profile.full_name) {
+      document.getElementById('nameInput').value = profile.full_name;
     }
-    body {
-      background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace;
-      min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      padding: 24px;
-      background-image: radial-gradient(ellipse at 20% 50%, rgba(240,192,64,0.05) 0%, transparent 60%);
+  }
+
+  // Check URL param for returning from checkout
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('premium') === 'success') {
+    await activatePremium();
+    window.history.replaceState({}, '', window.location.pathname);
+    return;
+  }
+
+  updateBadge();
+  renderCard();
+}
+
+initAuth();
+
+// ── Logout ──
+document.getElementById('logoutBtn').addEventListener('click', async function() {
+  await _supabase.auth.signOut();
+  window.location.href = 'login.html';
+});
+
+// ── Trial Badge ──
+function updateBadge() {
+  const badge = document.getElementById('trialText');
+  if (isPremium) {
+    badge.textContent = '✨ Premium';
+    document.getElementById('trialBadge').style.borderColor = '#f0c040';
+    document.getElementById('trialBadge').style.color = '#f0c040';
+  } else {
+    const left = Math.max(0, FREE_LIMIT - downloadsUsed);
+    badge.textContent = left + ' Free Download' + (left === 1 ? '' : 's') + ' Left';
+  }
+}
+
+// ── Photo Upload ──
+document.getElementById('photoUpload').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const img = new Image();
+    img.onload = function() {
+      uploadedAvatar = img;
+      document.getElementById('avatarIcon').style.display = 'none';
+      const preview = document.getElementById('avatarPreview');
+      preview.src = ev.target.result;
+      preview.style.display = 'block';
+      document.querySelector('.upload-btn').textContent = 'Change Photo';
+      renderCard();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+// ── Sync presets ──
+document.getElementById('bgPreset').addEventListener('change', function(e) {
+  document.getElementById('bgColor').value = e.target.value;
+  renderCard();
+});
+document.getElementById('textPreset').addEventListener('change', function(e) {
+  document.getElementById('textColor').value = e.target.value;
+  renderCard();
+});
+
+['bgColor','textColor','nameInput','quoteInput','cardSize','fontStyle'].forEach(function(id) {
+  document.getElementById(id).addEventListener('input', renderCard);
+  document.getElementById(id).addEventListener('change', renderCard);
+});
+
+document.getElementById('fontSize').addEventListener('input', function(e) {
+  document.getElementById('fsVal').textContent = e.target.value;
+  renderCard();
+});
+
+// ── Helpers ──
+function getDims() {
+  const parts = document.getElementById('cardSize').value.split('x');
+  return { w: parseInt(parts[0]), h: parseInt(parts[1]) };
+}
+
+function wrapText(ctx, text, maxWidth) {
+  const lines = [];
+  for (const para of text.split('\n')) {
+    if (!para.trim()) { lines.push(''); continue; }
+    let line = '';
+    for (const word of para.split(' ')) {
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line); line = word;
+      } else line = test;
     }
-    .box { width: 100%; max-width: 440px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px 36px; }
-    .logo { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--accent); margin-bottom: 6px; }
-    .subtitle { color: var(--muted); font-size: 12px; margin-bottom: 28px; }
-    .field { margin-bottom: 14px; }
-    .field label { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
-    .field input, .field select { width: 100%; padding: 11px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; transition: border-color 0.2s; }
-    .field input:focus, .field select:focus { border-color: var(--accent); }
-    .field select option { background: var(--bg); }
-    .btn { width: 100%; padding: 13px; background: var(--accent); color: #000; border: none; border-radius: 8px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; transition: opacity 0.2s; }
-    .btn:hover { opacity: 0.9; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .error { color: var(--danger); font-size: 11px; margin-top: 10px; text-align: center; display: none; }
-    .success { color: #4ade80; font-size: 11px; margin-top: 10px; text-align: center; display: none; }
-    .footer-link { text-align: center; margin-top: 20px; font-size: 12px; color: var(--muted); }
-    .footer-link a { color: var(--accent); text-decoration: none; }
-    .footer-link a:hover { text-decoration: underline; }
-  </style>
-</head>
-<body>
-  <div class="box">
-    <div class="logo">Quote Card Maker</div>
-    <div class="subtitle">Create your free account</div>
+    if (line) lines.push(line);
+  }
+  return lines;
+}
 
-    <div class="field">
-      <label>Full Name</label>
-      <input type="text" id="fullName" placeholder="e.g. John Doe">
-    </div>
-    <div class="field">
-      <label>Email</label>
-      <input type="email" id="email" placeholder="you@email.com">
-    </div>
-    <div class="field">
-      <label>Phone Number</label>
-      <input type="tel" id="phone" placeholder="e.g. 0712345678">
-    </div>
-    <div class="field">
-      <label>Country</label>
-      <select id="country">
-        <option value="">-- Select your country --</option>
-        <option value="KE">🇰🇪 Kenya</option>
-        <option value="UG">🇺🇬 Uganda</option>
-        <option value="TZ">🇹🇿 Tanzania</option>
-        <option value="NG">🇳🇬 Nigeria</option>
-        <option value="GH">🇬🇭 Ghana</option>
-        <option value="ZA">🇿🇦 South Africa</option>
-        <option value="RW">🇷🇼 Rwanda</option>
-        <option value="ET">🇪🇹 Ethiopia</option>
-        <option value="EG">🇪🇬 Egypt</option>
-        <option value="MA">🇲🇦 Morocco</option>
-        <option value="US">🇺🇸 United States</option>
-        <option value="GB">🇬🇧 United Kingdom</option>
-        <option value="CA">🇨🇦 Canada</option>
-        <option value="AU">🇦🇺 Australia</option>
-        <option value="UA">🇺🇦 Ukraine</option>
-        <option value="DE">🇩🇪 Germany</option>
-        <option value="FR">🇫🇷 France</option>
-        <option value="IN">🇮🇳 India</option>
-        <option value="OTHER">🌍 Other</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Password</label>
-      <input type="password" id="password" placeholder="Min 6 characters">
-    </div>
-    <div class="field">
-      <label>Confirm Password</label>
-      <input type="password" id="confirmPassword" placeholder="Repeat your password">
-    </div>
+function drawCircleImage(ctx, img, cx, cy, r) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.clip();
+  const a = img.width / img.height;
+  let sw, sh, sx, sy;
+  if (a > 1) { sh = img.height; sw = sh; sx = (img.width - sw) / 2; sy = 0; }
+  else { sw = img.width; sh = sw; sx = 0; sy = (img.height - sh) / 2; }
+  ctx.drawImage(img, sx, sy, sw, sh, cx - r, cy - r, r * 2, r * 2);
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+}
 
-    <button class="btn" id="signupBtn" onclick="doSignup()">Create Account →</button>
-    <p class="error" id="errorMsg"></p>
-    <p class="success" id="successMsg"></p>
+function drawPlaceholder(ctx, cx, cy, r) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#333';
+  ctx.fill();
+  ctx.fillStyle = '#666';
+  ctx.beginPath();
+  ctx.arc(cx, cy - r * 0.15, r * 0.38, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, cy + r * 1.05, r * 0.65, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
 
-    <div class="footer-link">
-      Already have an account? <a href="login.html">Sign in</a>
-    </div>
-  </div>
+// ── Render ──
+function renderCard(forDownload) {
+  const { w, h } = getDims();
+  canvas.width = w;
+  canvas.height = h;
 
-  <script>
-    // Redirect if already logged in
-    const _sb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
-    _sb.auth.getSession().then(({ data }) => {
-      if (data.session) window.location.href = 'index.html';
-    });
+  if (!forDownload) {
+    const max = 380;
+    const s = Math.min(max / w, max / h);
+    canvas.style.width = w * s + 'px';
+    canvas.style.height = h * s + 'px';
+  } else {
+    canvas.style.width = '';
+    canvas.style.height = '';
+  }
 
-    async function doSignup() {
-      const fullName = document.getElementById('fullName').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const phone = document.getElementById('phone').value.trim();
-      const country = document.getElementById('country').value;
-      const password = document.getElementById('password').value;
-      const confirmPassword = document.getElementById('confirmPassword').value;
-      const errEl = document.getElementById('errorMsg');
-      const sucEl = document.getElementById('successMsg');
-      const btn = document.getElementById('signupBtn');
+  const bg = document.getElementById('bgColor').value;
+  const tc = document.getElementById('textColor').value;
+  const fs = parseInt(document.getElementById('fontSize').value);
+  const name = document.getElementById('nameInput').value.trim();
+  const quote = document.getElementById('quoteInput').value.trim();
+  const fontTpl = document.getElementById('fontStyle').value;
 
-      errEl.style.display = 'none';
-      sucEl.style.display = 'none';
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
 
-      if (!fullName || !email || !phone || !country || !password || !confirmPassword) {
-        errEl.textContent = 'Please fill in all fields.';
-        errEl.style.display = 'block'; return;
-      }
-      if (password.length < 6) {
-        errEl.textContent = 'Password must be at least 6 characters.';
-        errEl.style.display = 'block'; return;
-      }
-      if (password !== confirmPassword) {
-        errEl.textContent = 'Passwords do not match.';
-        errEl.style.display = 'block'; return;
-      }
+  const pad = w * 0.1;
+  const ar = w * 0.07;
+  const acx = pad + ar;
+  const acy = h * 0.22;
 
-      btn.disabled = true;
-      btn.textContent = 'Creating account...';
+  if (uploadedAvatar) drawCircleImage(ctx, uploadedAvatar, acx, acy, ar);
+  else drawPlaceholder(ctx, acx, acy, ar);
 
-      try {
-        // Check if phone already exists
-        const { data: existingPhone } = await _sb
-          .from('customers')
-          .select('id')
-          .eq('phone', phone)
-          .single();
+  const nfs = Math.round(fs * 0.52);
+  ctx.fillStyle = tc;
+  ctx.font = '700 ' + nfs + 'px Segoe UI, sans-serif';
+  ctx.fillText(name, acx + ar + 14, acy + nfs * 0.38);
 
-        if (existingPhone) {
-          errEl.textContent = 'An account with this phone number already exists.';
-          errEl.style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = 'Create Account →';
-          return;
-        }
+  ctx.font = fontTpl.replace('{size}', fs);
+  ctx.fillStyle = tc;
+  const maxW = w - pad * 2;
+  const lineH = fs * 1.5;
+  const lines = wrapText(ctx, quote, maxW);
+  const blockH = lines.length * lineH;
+  const startY = h * 0.4 + (h * 0.5 - blockH) / 2;
+  lines.forEach(function(line, i) {
+    ctx.fillText(line, pad, startY + i * lineH);
+  });
+}
 
-        // Sign up with Supabase Auth
-        const { data, error } = await _sb.auth.signUp({
-          email: email,
-          password: password,
-          options: {
-            data: { full_name: fullName, phone: phone, country: country }
+// ── Download with paywall ──
+document.getElementById('downloadBtn').addEventListener('click', function() {
+  if (!isPremium && downloadsUsed >= FREE_LIMIT) {
+    showPremiumModal();
+    return;
+  }
+  doDownload();
+});
+
+async function doDownload() {
+  if (!isPremium) {
+    downloadsUsed++;
+    // Persist download count to DB
+    if (currentUser) {
+      await _supabase
+        .from('customers')
+        .update({ downloads_used: downloadsUsed })
+        .eq('id', currentUser.id);
+    }
+    updateBadge();
+  }
+  renderCard(true);
+  const link = document.createElement('a');
+  link.download = 'quote-card.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  setTimeout(function() { renderCard(false); }, 100);
+}
+
+// ── Modal helpers ──
+function showPremiumModal() {
+  document.getElementById('premiumModal').classList.add('active');
+}
+
+function showPaymentOptions() {
+  document.getElementById('premiumModal').classList.remove('active');
+  document.getElementById('paymentModal').classList.add('active');
+
+  document.getElementById('kenyaSection').style.display = 'none';
+  document.getElementById('africaSection').style.display = 'none';
+  document.getElementById('worldSection').style.display = 'none';
+
+  if (userCountry === 'KE') {
+    document.getElementById('kenyaSection').style.display = 'block';
+  } else if (AFRICA_COUNTRIES.includes(userCountry)) {
+    document.getElementById('africaSection').style.display = 'block';
+  } else {
+    document.getElementById('worldSection').style.display = 'block';
+  }
+}
+
+// ── selectMethod (used inline in HTML) ──
+function selectMethod(method) {
+  document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(method + 'Btn');
+  if (btn) btn.classList.add('active');
+}
+
+// ── Modal wiring ──
+document.getElementById('closeModalBtn').addEventListener('click', function() {
+  document.getElementById('premiumModal').classList.remove('active');
+});
+document.getElementById('goToPaymentBtn').addEventListener('click', showPaymentOptions);
+document.getElementById('backBtn').addEventListener('click', function() {
+  document.getElementById('paymentModal').classList.remove('active');
+  document.getElementById('premiumModal').classList.add('active');
+});
+
+// ── M-Pesa Payment ──
+document.getElementById('mpesaPayBtn').addEventListener('click', function() {
+  const phone = document.getElementById('mpesaPhone').value.trim();
+  if (!phone || phone.length < 9) {
+    alert('Please enter a valid M-Pesa phone number.');
+    return;
+  }
+
+  const btn = this;
+  btn.textContent = 'Sending STK Push...';
+  btn.disabled = true;
+
+  fetch('/api/mpesa', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: phone, amount: 390 })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.invoice_id) {
+      btn.textContent = '⏳ Waiting for PIN confirmation...';
+      pollPaymentStatus(data.invoice_id, btn);
+    } else {
+      alert('Failed to initiate M-Pesa push. Please try again.');
+      btn.textContent = 'Pay with M-Pesa / Airtel';
+      btn.disabled = false;
+    }
+  })
+  .catch(function() {
+    alert('Something went wrong. Please try again.');
+    btn.textContent = 'Pay with M-Pesa / Airtel';
+    btn.disabled = false;
+  });
+});
+
+function pollPaymentStatus(invoiceId, btn) {
+  let attempts = 0;
+  const maxAttempts = 20;
+
+  const interval = setInterval(function() {
+    attempts++;
+    fetch('/api/mpesa?invoice_id=' + invoiceId)
+      .then(function(r) { return r.json(); })
+      .then(async function(data) {
+        if (data.completed) {
+          clearInterval(interval);
+          // Also save payment linked to user email
+          if (currentUser) {
+            await _supabase.from('payments').upsert({
+              customer_id: currentUser.id,
+              email: currentUser.email,
+              amount: 390,
+              currency: 'KES',
+              method: 'M-Pesa',
+              status: 'success',
+              transaction_id: invoiceId
+            }, { onConflict: 'transaction_id' });
           }
-        });
-
-        if (error) {
-          errEl.textContent = error.message.includes('already registered')
-            ? 'An account with this email already exists.'
-            : error.message;
-          errEl.style.display = 'block';
+          await activatePremium();
+          btn.textContent = 'Pay with M-Pesa / Airtel';
           btn.disabled = false;
-          btn.textContent = 'Create Account →';
-          return;
+        } else if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          alert('Payment not confirmed yet. If you entered your PIN, wait a moment and refresh. Contact support if the issue persists.');
+          btn.textContent = 'Pay with M-Pesa / Airtel';
+          btn.disabled = false;
         }
-
-        // Save to customers table
-        if (data.user) {
-          await _sb.from('customers').insert({
-            id: data.user.id,
-            email: email,
-            phone: phone,
-            country: country,
-            full_name: fullName,
-            is_premium: false
-          });
-        }
-
-        sucEl.textContent = 'Account created! Redirecting to login...';
-        sucEl.style.display = 'block';
-        setTimeout(() => { window.location.href = 'login.html'; }, 2000);
-
-      } catch(e) {
-        errEl.textContent = 'Something went wrong. Please try again.';
-        errEl.style.display = 'block';
+      })
+      .catch(function() {
+        clearInterval(interval);
+        btn.textContent = 'Pay with M-Pesa / Airtel';
         btn.disabled = false;
-        btn.textContent = 'Create Account →';
-      }
-    }
+      });
+  }, 3000);
+}
 
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Enter') doSignup();
-    });
-  </script>
-</body>
-</html>
+// ── Blue Pay (Other Africa) ──
+document.getElementById('africaPayBtn').addEventListener('click', function() {
+  // Append user email and success redirect to checkout URL
+  const returnUrl = encodeURIComponent(window.location.origin + window.location.pathname + '?premium=success');
+  const checkoutUrl = CONFIG.checkoutAfrica + '?redirect_url=' + returnUrl;
+  window.open(checkoutUrl, '_blank');
+  this.textContent = '↗ Complete payment in new tab...';
+  this.disabled = true;
+  // Re-enable after 10s in case they come back without paying
+  setTimeout(() => {
+    this.textContent = 'Pay via Blue Pay →';
+    this.disabled = false;
+  }, 10000);
+});
+
+// ── Chariow (Rest of world) ──
+document.getElementById('worldPayBtn').addEventListener('click', function() {
+  const returnUrl = encodeURIComponent(window.location.origin + window.location.pathname + '?premium=success');
+  const checkoutUrl = CONFIG.checkoutWorld + '?redirect_url=' + returnUrl;
+  window.open(checkoutUrl, '_blank');
+  this.textContent = '↗ Complete payment in new tab...';
+  this.disabled = true;
+  setTimeout(() => {
+    this.textContent = 'Pay via International Checkout →';
+    this.disabled = false;
+  }, 10000);
+});
+
+// ── Activate Premium ──
+async function activatePremium() {
+  isPremium = true;
+  updateBadge();
+
+  if (currentUser) {
+    await _supabase
+      .from('customers')
+      .update({ is_premium: true, premium_granted_at: new Date().toISOString() })
+      .eq('id', currentUser.id);
+  }
+
+  document.getElementById('paymentModal').classList.remove('active');
+  document.getElementById('premiumModal').classList.remove('active');
+  document.getElementById('successModal').classList.add('active');
+}
+
+// ── Success continue ──
+document.getElementById('continueBtn').addEventListener('click', function() {
+  document.getElementById('successModal').classList.remove('active');
+  doDownload();
+});
