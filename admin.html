@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — Quote Card Maker</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -29,7 +27,6 @@
       min-height: 100vh;
     }
 
-    /* ── LOGIN ── */
     #loginScreen {
       min-height: 100vh;
       display: flex;
@@ -63,9 +60,7 @@
       margin-bottom: 32px;
     }
 
-    .field {
-      margin-bottom: 16px;
-    }
+    .field { margin-bottom: 16px; }
 
     .field label {
       display: block;
@@ -89,9 +84,7 @@
       transition: border-color 0.2s;
     }
 
-    .field input:focus {
-      border-color: var(--accent);
-    }
+    .field input:focus { border-color: var(--accent); }
 
     .btn-login {
       width: 100%;
@@ -109,6 +102,7 @@
     }
 
     .btn-login:hover { opacity: 0.9; }
+    .btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .login-error {
       color: var(--danger);
@@ -118,7 +112,6 @@
       display: none;
     }
 
-    /* ── DASHBOARD ── */
     #dashboard { display: none; }
 
     .topbar {
@@ -159,18 +152,10 @@
       transition: all 0.2s;
     }
 
-    .btn-logout:hover {
-      border-color: var(--danger);
-      color: var(--danger);
-    }
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
 
-    .main {
-      padding: 32px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+    .main { padding: 32px; max-width: 1200px; margin: 0 auto; }
 
-    /* ── STATS ── */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -214,13 +199,8 @@
       color: var(--text);
     }
 
-    .stat-sub {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-    /* ── TABS ── */
     .tabs {
       display: flex;
       gap: 4px;
@@ -241,15 +221,11 @@
       transition: all 0.2s;
     }
 
-    .tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* ── TABLE ── */
     .table-wrap {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -265,11 +241,7 @@
       border-bottom: 1px solid var(--border);
     }
 
-    .table-title {
-      font-family: 'Syne', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-    }
+    .table-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
 
     .btn-refresh {
       padding: 6px 14px;
@@ -283,15 +255,9 @@
       transition: all 0.2s;
     }
 
-    .btn-refresh:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
+    .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+    table { width: 100%; border-collapse: collapse; }
 
     th {
       padding: 12px 20px;
@@ -304,11 +270,7 @@
       background: var(--surface);
     }
 
-    td {
-      padding: 14px 20px;
-      font-size: 13px;
-      border-bottom: 1px solid var(--border);
-    }
+    td { padding: 14px 20px; font-size: 13px; border-bottom: 1px solid var(--border); }
 
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: rgba(255,255,255,0.02); }
@@ -321,40 +283,13 @@
       font-weight: 500;
     }
 
-    .badge-premium {
-      background: rgba(240,192,64,0.15);
-      color: var(--accent);
-      border: 1px solid rgba(240,192,64,0.3);
-    }
+    .badge-premium { background: rgba(240,192,64,0.15); color: var(--accent); border: 1px solid rgba(240,192,64,0.3); }
+    .badge-free { background: rgba(107,107,128,0.15); color: var(--muted); border: 1px solid var(--border); }
+    .badge-success { background: rgba(74,222,128,0.15); color: var(--accent2); border: 1px solid rgba(74,222,128,0.3); }
+    .badge-failed { background: rgba(248,113,113,0.15); color: var(--danger); border: 1px solid rgba(248,113,113,0.3); }
+    .badge-reversed { background: rgba(248,113,113,0.1); color: var(--danger); border: 1px solid rgba(248,113,113,0.2); }
 
-    .badge-free {
-      background: rgba(107,107,128,0.15);
-      color: var(--muted);
-      border: 1px solid var(--border);
-    }
-
-    .badge-success {
-      background: rgba(74,222,128,0.15);
-      color: var(--accent2);
-      border: 1px solid rgba(74,222,128,0.3);
-    }
-
-    .badge-failed {
-      background: rgba(248,113,113,0.15);
-      color: var(--danger);
-      border: 1px solid rgba(248,113,113,0.3);
-    }
-
-    .badge-reversed {
-      background: rgba(248,113,113,0.1);
-      color: var(--danger);
-      border: 1px solid rgba(248,113,113,0.2);
-    }
-
-    .action-btns {
-      display: flex;
-      gap: 8px;
-    }
+    .action-btns { display: flex; gap: 8px; }
 
     .btn-grant {
       padding: 5px 12px;
@@ -384,14 +319,7 @@
 
     .btn-revoke:hover { background: rgba(248,113,113,0.2); }
 
-    .empty-state {
-      padding: 48px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .loading {
+    .empty-state, .loading {
       padding: 48px;
       text-align: center;
       color: var(--muted);
@@ -429,11 +357,7 @@
       z-index: 999;
     }
 
-    .toast.show {
-      transform: translateY(0);
-      opacity: 1;
-    }
-
+    .toast.show { transform: translateY(0); opacity: 1; }
     .toast.success { border-color: var(--accent2); color: var(--accent2); }
     .toast.error { border-color: var(--danger); color: var(--danger); }
   </style>
@@ -453,7 +377,7 @@
         <label>Password</label>
         <input type="password" id="loginPassword" placeholder="••••••••">
       </div>
-      <button class="btn-login" onclick="doLogin()">Sign In →</button>
+      <button class="btn-login" id="loginBtn" onclick="doLogin()">Sign In →</button>
       <p class="login-error" id="loginError">Invalid email or password.</p>
     </div>
   </div>
@@ -461,15 +385,12 @@
   <!-- DASHBOARD -->
   <div id="dashboard">
     <div class="topbar">
-      <div class="topbar-brand">
-        ADMIN <span>Quote Card Maker</span>
-      </div>
+      <div class="topbar-brand">ADMIN <span>Quote Card Maker</span></div>
       <button class="btn-logout" onclick="doLogout()">Log Out</button>
     </div>
 
     <div class="main">
 
-      <!-- Stats -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-label">Total Revenue</div>
@@ -493,14 +414,12 @@
         </div>
       </div>
 
-      <!-- Tabs -->
       <div class="tabs">
         <button class="tab active" onclick="switchTab('customers')">Customers</button>
         <button class="tab" onclick="switchTab('payments')">Payments</button>
         <button class="tab" onclick="switchTab('reversals')">Reversals</button>
       </div>
 
-      <!-- Customers Tab -->
       <div class="tab-content active" id="tab-customers">
         <div class="table-wrap">
           <div class="table-header">
@@ -511,7 +430,6 @@
         </div>
       </div>
 
-      <!-- Payments Tab -->
       <div class="tab-content" id="tab-payments">
         <div class="table-wrap">
           <div class="table-header">
@@ -522,7 +440,6 @@
         </div>
       </div>
 
-      <!-- Reversals Tab -->
       <div class="tab-content" id="tab-reversals">
         <div class="table-wrap">
           <div class="table-header">
@@ -539,17 +456,15 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const db = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+    let authToken = sessionStorage.getItem('adminToken');
 
-    // Check if already logged in
-    db.auth.getSession().then(({ data }) => {
-      if (data.session) showDashboard();
-    });
+    if (authToken) showDashboard();
 
     async function doLogin() {
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value.trim();
       const errEl = document.getElementById('loginError');
+      const btn = document.getElementById('loginBtn');
       errEl.style.display = 'none';
 
       if (!email || !password) {
@@ -558,22 +473,37 @@
         return;
       }
 
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+
       try {
-        const { data, error } = await db.auth.signInWithPassword({ email, password });
-        if (error || !data.session) {
-          errEl.textContent = 'Invalid email or password.';
+        const res = await fetch('/api/admin-auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (data.token) {
+          sessionStorage.setItem('adminToken', data.token);
+          authToken = data.token;
+          showDashboard();
+        } else {
+          errEl.textContent = data.error || 'Invalid credentials.';
           errEl.style.display = 'block';
-          return;
         }
-        showDashboard();
       } catch(e) {
         errEl.textContent = 'Connection error. Try again.';
         errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In →';
       }
     }
 
-    async function doLogout() {
-      await db.auth.signOut();
+    function doLogout() {
+      sessionStorage.removeItem('adminToken');
+      authToken = null;
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('loginScreen').style.display = 'flex';
     }
@@ -594,14 +524,15 @@
 
     async function loadData() {
       try {
-        const [{ data: customers }, { data: payments }] = await Promise.all([
-          db.from('customers').select('*').order('created_at', { ascending: false }),
-          db.from('payments').select('*').order('created_at', { ascending: false })
-        ]);
-        renderStats({ customers: customers || [], payments: payments || [] });
-        renderCustomers(customers || []);
-        renderPayments(payments || []);
-        renderReversals((payments || []).filter(p => p.reversed));
+        const res = await fetch('/api/admin-data', {
+          headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+        if (res.status === 401) { doLogout(); return; }
+        const data = await res.json();
+        renderStats(data);
+        renderCustomers(data.customers);
+        renderPayments(data.payments);
+        renderReversals(data.payments.filter(p => p.reversed));
       } catch(e) {
         showToast('Failed to load data', 'error');
       }
@@ -703,19 +634,21 @@
 
     async function updatePremium(customerId, grant) {
       try {
-        const { error } = await db
-          .from('customers')
-          .update({
-            is_premium: grant,
-            premium_granted_at: grant ? new Date().toISOString() : null
-          })
-          .eq('id', customerId);
-
-        if (error) {
-          showToast('Update failed: ' + error.message, 'error');
-        } else {
+        const res = await fetch('/api/admin-update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + authToken
+          },
+          body: JSON.stringify({ customerId, isPremium: grant })
+        });
+        if (res.status === 401) { doLogout(); return; }
+        const data = await res.json();
+        if (data.success) {
           showToast(grant ? 'Premium granted ✓' : 'Premium revoked ✓', 'success');
           loadData();
+        } else {
+          showToast('Update failed: ' + (data.error || ''), 'error');
         }
       } catch(e) {
         showToast('Connection error', 'error');
@@ -729,7 +662,6 @@
       setTimeout(() => t.className = 'toast', 3000);
     }
 
-    // Enter key on login
     document.addEventListener('keydown', e => {
       if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') {
         doLogin();
