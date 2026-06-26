@@ -1,53 +1,37 @@
-// ── Init Supabase ──
-const _supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
-
-// ── African countries (non-Kenya) ──
-const AFRICA_COUNTRIES = ['UG','TZ','NG','GH','ZA','ET','EG','RW','SN','CI','CM','ZM','ZW','MZ','MA','TN','AO','MG','BF','ML','MW','NE','SD','SO','SS','TD','DJ','ER','KM','LS','LR','LY','MR','MU','NA','SC','SL','ST','SZ','TO','TG','GM','GN','GW','CV','BJ','BI','CF','CG','CD','GA','GQ'];
+// ── Supabase ──
+const _sb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
 
 // ── State ──
 let uploadedAvatar = null;
-let isPremium = false;
-let userCountry = '';
 let currentUser = null;
-let downloadsUsed = 0;
-const FREE_LIMIT = 1;
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-// ── Auth Check ──
+// ── Auth + Premium Gate ──
 async function initAuth() {
-  const { data } = await _supabase.auth.getSession();
+  const { data } = await _sb.auth.getSession();
   if (!data.session) {
-    window.location.href = 'signup.html';
+    window.location.href = 'login.html';
     return;
   }
 
   currentUser = data.session.user;
 
-  // Get profile from customers table
-  const { data: profile } = await _supabase
+  const { data: profile } = await _sb
     .from('customers')
     .select('*')
     .eq('id', currentUser.id)
     .single();
 
-  if (profile) {
-    userCountry = profile.country || '';
-    isPremium = !!profile.is_premium;
-    downloadsUsed = profile.downloads_used || 0;
-
-    if (profile.full_name) {
-      document.getElementById('nameInput').value = profile.full_name;
-    }
+  if (!profile || !profile.is_premium) {
+    // Not premium — send to payment page, this app is premium-only
+    window.location.href = 'payment.html';
+    return;
   }
 
-  // Check URL param for returning from checkout
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('premium') === 'success') {
-    await activatePremium();
-    window.history.replaceState({}, '', window.location.pathname);
-    return;
+  if (profile.full_name) {
+    document.getElementById('nameInput').value = profile.full_name;
   }
 
   updateBadge();
@@ -58,21 +42,15 @@ initAuth();
 
 // ── Logout ──
 document.getElementById('logoutBtn').addEventListener('click', async function() {
-  await _supabase.auth.signOut();
+  await _sb.auth.signOut();
   window.location.href = 'login.html';
 });
 
-// ── Trial Badge ──
+// ── Trial Badge (always Premium since this page is gated) ──
 function updateBadge() {
   const badge = document.getElementById('trialText');
-  if (isPremium) {
-    badge.textContent = '✨ Premium';
-    document.getElementById('trialBadge').style.borderColor = '#f0c040';
-    document.getElementById('trialBadge').style.color = '#f0c040';
-  } else {
-    const left = Math.max(0, FREE_LIMIT - downloadsUsed);
-    badge.textContent = left + ' Free Download' + (left === 1 ? '' : 's') + ' Left';
-  }
+  badge.textContent = '✨ Premium';
+  document.getElementById('trialBadge').style.borderColor = '#f0c040';
 }
 
 // ── Photo Upload ──
@@ -225,204 +203,12 @@ function renderCard(forDownload) {
   });
 }
 
-// ── Download with paywall ──
+// ── Download (no paywall here — only premium users reach this page) ──
 document.getElementById('downloadBtn').addEventListener('click', function() {
-  if (!isPremium && downloadsUsed >= FREE_LIMIT) {
-    showPremiumModal();
-    return;
-  }
-  doDownload();
-});
-
-async function doDownload() {
-  if (!isPremium) {
-    downloadsUsed++;
-    // Persist download count to DB
-    if (currentUser) {
-      await _supabase
-        .from('customers')
-        .update({ downloads_used: downloadsUsed })
-        .eq('id', currentUser.id);
-    }
-    updateBadge();
-  }
   renderCard(true);
   const link = document.createElement('a');
   link.download = 'quote-card.png';
   link.href = canvas.toDataURL('image/png');
   link.click();
   setTimeout(function() { renderCard(false); }, 100);
-}
-
-// ── Modal helpers ──
-function showPremiumModal() {
-  document.getElementById('premiumModal').classList.add('active');
-}
-
-function showPaymentOptions() {
-  document.getElementById('premiumModal').classList.remove('active');
-  document.getElementById('paymentModal').classList.add('active');
-
-  // Always show all three — but highlight the recommended one for their country
-  document.getElementById('kenyaSection').style.display = 'block';
-  document.getElementById('africaSection').style.display = 'block';
-  document.getElementById('worldSection').style.display = 'block';
-
-  // Move the recommended section to the top
-  const container = document.getElementById('paymentSections');
-  if (!container) return;
-
-  let first;
-  if (userCountry === 'KE') {
-    first = document.getElementById('kenyaSection');
-  } else if (AFRICA_COUNTRIES.includes(userCountry)) {
-    first = document.getElementById('africaSection');
-  } else {
-    first = document.getElementById('worldSection');
-  }
-  if (first) container.prepend(first);
-}
-
-// ── selectMethod (used inline in HTML) ──
-function selectMethod(method) {
-  document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById(method + 'Btn');
-  if (btn) btn.classList.add('active');
-}
-
-// ── Modal wiring ──
-document.getElementById('closeModalBtn').addEventListener('click', function() {
-  document.getElementById('premiumModal').classList.remove('active');
-});
-document.getElementById('goToPaymentBtn').addEventListener('click', showPaymentOptions);
-document.getElementById('backBtn').addEventListener('click', function() {
-  document.getElementById('paymentModal').classList.remove('active');
-  document.getElementById('premiumModal').classList.add('active');
-});
-
-// ── M-Pesa Payment ──
-document.getElementById('mpesaPayBtn').addEventListener('click', function() {
-  const phone = document.getElementById('mpesaPhone').value.trim();
-  if (!phone || phone.length < 9) {
-    alert('Please enter a valid M-Pesa phone number.');
-    return;
-  }
-
-  const btn = this;
-  btn.textContent = 'Sending STK Push...';
-  btn.disabled = true;
-
-  fetch('/api/mpesa', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone: phone, amount: 390 })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.invoice_id) {
-      btn.textContent = '⏳ Waiting for PIN confirmation...';
-      pollPaymentStatus(data.invoice_id, btn);
-    } else {
-      alert('Failed to initiate M-Pesa push. Please try again.');
-      btn.textContent = 'Pay with M-Pesa / Airtel';
-      btn.disabled = false;
-    }
-  })
-  .catch(function() {
-    alert('Something went wrong. Please try again.');
-    btn.textContent = 'Pay with M-Pesa / Airtel';
-    btn.disabled = false;
-  });
-});
-
-function pollPaymentStatus(invoiceId, btn) {
-  let attempts = 0;
-  const maxAttempts = 20;
-
-  const interval = setInterval(function() {
-    attempts++;
-    fetch('/api/mpesa?invoice_id=' + invoiceId)
-      .then(function(r) { return r.json(); })
-      .then(async function(data) {
-        if (data.completed) {
-          clearInterval(interval);
-          // Also save payment linked to user email
-          if (currentUser) {
-            await _supabase.from('payments').upsert({
-              customer_id: currentUser.id,
-              email: currentUser.email,
-              amount: 390,
-              currency: 'KES',
-              method: 'M-Pesa',
-              status: 'success',
-              transaction_id: invoiceId
-            }, { onConflict: 'transaction_id' });
-          }
-          await activatePremium();
-          btn.textContent = 'Pay with M-Pesa / Airtel';
-          btn.disabled = false;
-        } else if (attempts >= maxAttempts) {
-          clearInterval(interval);
-          alert('Payment not confirmed yet. If you entered your PIN, wait a moment and refresh. Contact support if the issue persists.');
-          btn.textContent = 'Pay with M-Pesa / Airtel';
-          btn.disabled = false;
-        }
-      })
-      .catch(function() {
-        clearInterval(interval);
-        btn.textContent = 'Pay with M-Pesa / Airtel';
-        btn.disabled = false;
-      });
-  }, 3000);
-}
-
-// ── Blue Pay (Other Africa) ──
-document.getElementById('africaPayBtn').addEventListener('click', function() {
-  // Append user email and success redirect to checkout URL
-  const returnUrl = encodeURIComponent(window.location.origin + window.location.pathname + '?premium=success');
-  const checkoutUrl = CONFIG.checkoutAfrica + '?redirect_url=' + returnUrl;
-  window.open(checkoutUrl, '_blank');
-  this.textContent = '↗ Complete payment in new tab...';
-  this.disabled = true;
-  // Re-enable after 10s in case they come back without paying
-  setTimeout(() => {
-    this.textContent = 'Pay via Blue Pay →';
-    this.disabled = false;
-  }, 10000);
-});
-
-// ── Chariow (Rest of world) ──
-document.getElementById('worldPayBtn').addEventListener('click', function() {
-  const returnUrl = encodeURIComponent(window.location.origin + window.location.pathname + '?premium=success');
-  const checkoutUrl = CONFIG.checkoutWorld + '?redirect_url=' + returnUrl;
-  window.open(checkoutUrl, '_blank');
-  this.textContent = '↗ Complete payment in new tab...';
-  this.disabled = true;
-  setTimeout(() => {
-    this.textContent = 'Pay via International Checkout →';
-    this.disabled = false;
-  }, 10000);
-});
-
-// ── Activate Premium ──
-async function activatePremium() {
-  isPremium = true;
-  updateBadge();
-
-  if (currentUser) {
-    await _supabase
-      .from('customers')
-      .update({ is_premium: true, premium_granted_at: new Date().toISOString() })
-      .eq('id', currentUser.id);
-  }
-
-  document.getElementById('paymentModal').classList.remove('active');
-  document.getElementById('premiumModal').classList.remove('active');
-  document.getElementById('successModal').classList.add('active');
-}
-
-// ── Success continue ──
-document.getElementById('continueBtn').addEventListener('click', function() {
-  document.getElementById('successModal').classList.remove('active');
-  doDownload();
 });

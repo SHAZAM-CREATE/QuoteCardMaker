@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upgrade — Quote Card Maker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #0a0a0f; --surface: #111118; --border: #1e1e2e; --accent: #f0c040; --danger: #f87171; --text: #e8e8f0; --muted: #6b6b80; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background-image: radial-gradient(ellipse at 50% 30%, rgba(240,192,64,0.06) 0%, transparent 60%); }
+    .box { width: 100%; max-width: 440px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px 36px; }
+    .logo { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+    .subtitle { color: var(--muted); font-size: 12px; margin-bottom: 28px; }
+    .price-block { text-align: center; margin-bottom: 28px; padding: 20px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; }
+    .price-block .crown { font-size: 32px; margin-bottom: 8px; }
+    .price-block h2 { font-family: 'Syne', sans-serif; font-size: 20px; color: var(--accent); margin-bottom: 6px; }
+    .price-block .amount { font-size: 28px; font-family: 'Syne', sans-serif; font-weight: 800; }
+    .price-block .amount span { font-size: 13px; color: var(--muted); }
+    .features { list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 8px; }
+    .features li { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+    .features li::before { content: '✓'; color: var(--accent); font-weight: 700; }
+    .section-label { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+    .field { margin-bottom: 16px; }
+    .field input { width: 100%; padding: 11px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; transition: border-color 0.2s; }
+    .field input:focus { border-color: var(--accent); }
+    .btn-pay { width: 100%; padding: 14px; background: linear-gradient(135deg, #f0c040, #ff8c00); color: #000; border: none; border-radius: 8px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .btn-pay:hover { opacity: 0.9; }
+    .btn-pay:disabled { opacity: 0.5; cursor: not-allowed; }
+    .note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 12px; line-height: 1.5; }
+    .secure { font-size: 11px; color: #333; text-align: center; margin-top: 16px; }
+    .error { color: var(--danger); font-size: 11px; margin-top: 10px; text-align: center; display: none; }
+    .success { color: #4ade80; font-size: 11px; margin-top: 10px; text-align: center; display: none; }
+    .logout-link { text-align: center; margin-top: 20px; font-size: 12px; color: var(--muted); }
+    .logout-link a { color: var(--muted); text-decoration: underline; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="logo">Quote Card Maker</div>
+    <div class="subtitle">One step away from unlimited quote cards</div>
+
+    <div class="price-block">
+      <div class="crown">👑</div>
+      <h2>Go Premium</h2>
+      <div class="amount" id="priceDisplay">$3 <span>/ month</span></div>
+    </div>
+
+    <ul class="features">
+      <li>Unlimited quote card downloads</li>
+      <li>All fonts and color themes</li>
+      <li>HD 1080×1080 export</li>
+      <li>Priority support</li>
+      <li>Cancel anytime</li>
+    </ul>
+
+    <!-- Kenya: M-Pesa -->
+    <div id="kenyaSection" style="display:none">
+      <div class="field">
+        <label class="section-label">M-Pesa / Airtel Money Number</label>
+        <input type="tel" id="mpesaPhone" placeholder="e.g. 0712345678">
+      </div>
+      <p class="note">You will receive an STK push to confirm KES 390/month.</p>
+      <button class="btn-pay" id="mpesaPayBtn" style="margin-top:14px">Pay with M-Pesa / Airtel →</button>
+    </div>
+
+    <!-- Other Africa: BluePay -->
+    <div id="africaSection" style="display:none">
+      <p class="note" style="margin-bottom:14px">You'll be redirected to our secure African payment checkout.</p>
+      <button class="btn-pay" id="africaPayBtn">Pay via Blue Pay →</button>
+    </div>
+
+    <!-- Rest of World: Chariow -->
+    <div id="worldSection" style="display:none">
+      <p class="note" style="margin-bottom:14px">You'll be redirected to our secure international checkout.</p>
+      <button class="btn-pay" id="worldPayBtn">Pay via International Checkout →</button>
+    </div>
+
+    <p class="error" id="errorMsg"></p>
+    <p class="success" id="successMsg"></p>
+    <p class="secure">🔒 Secured payment — your details are safe</p>
+
+    <div class="logout-link"><a onclick="doLogout()">Log out and go back</a></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script>
+    const _sb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+
+    const AFRICA_COUNTRIES = ['UG','TZ','NG','GH','ZA','ET','EG','RW','SN','CI','CM','ZM','ZW','MZ','MA','TN','AO','MG','BF','ML','MW','NE','SD','SO','SS','TD','DJ','ER','KM','LS','LR','LY','MR','MU','NA','SC','SL','ST','SZ','TG','GM','GN','GW','CV','BJ','BI','CF','CG','CD','GA','GQ'];
+
+    let currentUser = null;
+    let userCountry = sessionStorage.getItem('userCountry') || '';
+
+    // Auth guard — must be logged in to see this page
+    async function init() {
+      const { data } = await _sb.auth.getSession();
+      if (!data.session) { window.location.href = 'login.html'; return; }
+
+      currentUser = data.session.user;
+
+      // Fetch fresh profile
+      const { data: profile } = await _sb.from('customers').select('is_premium, country').eq('id', currentUser.id).single();
+      if (profile) {
+        if (profile.is_premium) { window.location.href = 'index.html'; return; }
+        userCountry = profile.country || userCountry;
+      }
+
+      // Show correct payment section
+      if (userCountry === 'KE') {
+        document.getElementById('kenyaSection').style.display = 'block';
+        document.getElementById('priceDisplay').innerHTML = 'KES 390 <span>/ month</span>';
+      } else if (AFRICA_COUNTRIES.includes(userCountry)) {
+        document.getElementById('africaSection').style.display = 'block';
+      } else {
+        document.getElementById('worldSection').style.display = 'block';
+      }
+    }
+
+    init();
+
+    // ── M-Pesa ──
+    document.getElementById('mpesaPayBtn').addEventListener('click', async function() {
+      const phone = document.getElementById('mpesaPhone').value.trim();
+      const errEl = document.getElementById('errorMsg');
+      errEl.style.display = 'none';
+      if (!phone || phone.length < 10) { errEl.textContent = 'Please enter a valid phone number.'; errEl.style.display = 'block'; return; }
+
+      this.textContent = 'Sending STK Push...'; this.disabled = true;
+      const btn = this;
+
+      try {
+        const res = await fetch('/api/mpesa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, amount: 390, userId: currentUser.id })
+        });
+        const data = await res.json();
+
+        if (data.invoice_id) {
+          btn.textContent = '⏳ Waiting for PIN confirmation...';
+          pollPayment(data.invoice_id, btn);
+        } else {
+          errEl.textContent = 'Failed to send STK push. Please try again.';
+          errEl.style.display = 'block'; btn.textContent = 'Pay with M-Pesa / Airtel →'; btn.disabled = false;
+        }
+      } catch(e) {
+        errEl.textContent = 'Something went wrong. Please try again.';
+        errEl.style.display = 'block'; btn.textContent = 'Pay with M-Pesa / Airtel →'; btn.disabled = false;
+      }
+    });
+
+    function pollPayment(invoiceId, btn) {
+      let attempts = 0;
+      const interval = setInterval(async function() {
+        attempts++;
+        try {
+          const res = await fetch('/api/mpesa?invoice_id=' + invoiceId);
+          const data = await res.json();
+          if (data.completed) {
+            clearInterval(interval);
+            await activatePremium();
+          } else if (attempts >= 20) {
+            clearInterval(interval);
+            document.getElementById('errorMsg').textContent = 'Payment not confirmed. If you entered your PIN, wait and refresh.';
+            document.getElementById('errorMsg').style.display = 'block';
+            btn.textContent = 'Pay with M-Pesa / Airtel →'; btn.disabled = false;
+          }
+        } catch(e) { clearInterval(interval); btn.textContent = 'Pay with M-Pesa / Airtel →'; btn.disabled = false; }
+      }, 3000);
+    }
+
+    // ── BluePay (Other Africa) ──
+    document.getElementById('africaPayBtn').addEventListener('click', function() {
+      localStorage.setItem('pendingPremium', 'true');
+      window.open(CONFIG.checkoutAfrica, '_blank');
+      this.textContent = 'Complete payment in the new tab →';
+      const check = setInterval(() => {
+        if (localStorage.getItem('pendingPremium') === 'done') { clearInterval(check); activatePremium(); }
+      }, 3000);
+    });
+
+    // ── Chariow (World) ──
+    document.getElementById('worldPayBtn').addEventListener('click', function() {
+      localStorage.setItem('pendingPremium', 'true');
+      window.open(CONFIG.checkoutWorld, '_blank');
+      this.textContent = 'Complete payment in the new tab →';
+      const check = setInterval(() => {
+        if (localStorage.getItem('pendingPremium') === 'done') { clearInterval(check); activatePremium(); }
+      }, 3000);
+    });
+
+    // ── Activate Premium ──
+    async function activatePremium() {
+      const sucEl = document.getElementById('successMsg');
+      sucEl.textContent = '🎉 Payment confirmed! Activating premium...'; sucEl.style.display = 'block';
+
+      if (currentUser) {
+        await _sb.from('customers').update({
+          is_premium: true,
+          premium_granted_at: new Date().toISOString()
+        }).eq('id', currentUser.id);
+      }
+
+      localStorage.setItem('isPremium', 'true');
+      localStorage.removeItem('pendingPremium');
+
+      sucEl.textContent = '✅ Premium activated! Redirecting...';
+      setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+    }
+
+    // ── Logout ──
+    async function doLogout() {
+      await _sb.auth.signOut();
+      localStorage.removeItem('isPremium');
+      sessionStorage.clear();
+      window.location.href = 'login.html';
+    }
+
+    // Handle return from external checkout with ?premium=success
+    if (new URLSearchParams(window.location.search).get('premium') === 'success') {
+      activatePremium();
+    }
+  </script>
+</body>
+</html>

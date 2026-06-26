@@ -7,10 +7,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quote Card Maker</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
 </head>
 <body>
 
@@ -19,7 +16,7 @@
   <!-- Trial Badge -->
   <div class="trial-badge" id="trialBadge">
     <div class="trial-dot"></div>
-    <span id="trialText">1 Free Download Left</span>
+    <span id="trialText">Premium</span>
   </div>
 
   <div class="layout">
@@ -50,7 +47,7 @@
       <!-- Quote -->
       <div>
         <label class="section-label" for="quoteInput">Quote Text</label>
-        <textarea id="quoteInput" rows="5">Don't stop when you're tired. Stop when Netflix asks if you're still watching.</textarea>
+        <textarea id="quoteInput" rows="5"></textarea>
       </div>
 
       <!-- Colors -->
@@ -105,7 +102,7 @@
       </div>
 
       <button class="btn-download" id="downloadBtn">⬇ Download PNG</button>
-      <button class="btn-logout" id="logoutBtn">Log Out</button>
+      <button class="btn-logout" id="logoutBtn" style="margin-top:10px; width:100%; padding:10px; background:transparent; border:1px solid #333; border-radius:8px; color:#666; cursor:pointer; font-size:13px;">Log Out</button>
 
     </div>
 
@@ -117,86 +114,16 @@
 
   </div>
 
-  <!-- Premium Modal -->
-  <div class="modal-overlay" id="premiumModal">
-    <div class="modal">
-      <div class="modal-icon">👑</div>
-      <h2>Go Premium</h2>
-      <p>You've used your free download. Upgrade to keep creating unlimited quote cards.</p>
-      <div class="modal-price">$3 <span>/ month</span></div>
-      <ul class="modal-features">
-        <li>Unlimited quote card downloads</li>
-        <li>All fonts and color themes</li>
-        <li>HD 1080×1080 export</li>
-        <li>Priority support</li>
-        <li>Cancel anytime</li>
-      </ul>
-      <button class="btn-upgrade" id="goToPaymentBtn">Upgrade Now — $3/month</button>
-      <button class="btn-close-modal" id="closeModalBtn">Maybe later</button>
-    </div>
-  </div>
-
-  <!-- Payment Modal -->
-  <div class="modal-overlay" id="paymentModal">
-    <div class="payment-modal">
-      <h3>Complete Payment</h3>
-      <p>$3.00 / month — cancel anytime</p>
-
-      <div id="paymentSections">
-
-        <!-- KENYA: M-Pesa / Airtel -->
-        <div id="kenyaSection" class="pay-section">
-          <div class="pay-section-label">📱 M-Pesa / Airtel Money <span class="pay-tag">Kenya</span></div>
-          <div class="payment-field">
-            <label class="section-label">Phone Number</label>
-            <input type="tel" id="mpesaPhone" placeholder="e.g. 0712345678">
-          </div>
-          <p class="payment-note">Enter your M-Pesa or Airtel Money number. You'll receive an STK push to enter your PIN — KES 390/month.</p>
-          <button class="btn-pay" id="mpesaPayBtn">Pay KES 390 via M-Pesa / Airtel →</button>
-        </div>
-
-        <div class="pay-divider"></div>
-
-        <!-- OTHER AFRICA: Blue Pay -->
-        <div id="africaSection" class="pay-section">
-          <div class="pay-section-label">🌍 Blue Pay Checkout <span class="pay-tag">Africa</span></div>
-          <p class="payment-note">Secure African payment gateway — supports mobile money, cards, and more across Africa.</p>
-          <button class="btn-pay btn-pay-outline" id="africaPayBtn">Pay via Blue Pay →</button>
-        </div>
-
-        <div class="pay-divider"></div>
-
-        <!-- REST OF WORLD: Chariow -->
-        <div id="worldSection" class="pay-section">
-          <div class="pay-section-label">💳 International Checkout <span class="pay-tag">Worldwide</span></div>
-          <p class="payment-note">Secure international checkout — supports Visa, Mastercard, and more.</p>
-          <button class="btn-pay btn-pay-outline" id="worldPayBtn">Pay via International Checkout →</button>
-        </div>
-
-      </div>
-
-      <p class="secure-note">🔒 Secured payment — your details are safe</p>
-      <button class="btn-back" id="backBtn">← Go back</button>
-    </div>
-  </div>
-
-  <!-- Success Modal -->
-  <div class="modal-overlay" id="successModal">
-    <div class="success-modal">
-      <div class="success-icon">🎉</div>
-      <h2>You're Premium!</h2>
-      <p>Welcome aboard. You now have unlimited downloads. Go create amazing quote cards.</p>
-      <button class="btn-continue" id="continueBtn">Start Creating</button>
-    </div>
-  </div>
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script src="script.js"></script>
 
   <footer>
     <hr>
-    <p>&copy;2026 · CREATIVE-TECH</p>
+    <p>&copy;2026.CREATIVE-TECH</p>
   </footer>
 
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');

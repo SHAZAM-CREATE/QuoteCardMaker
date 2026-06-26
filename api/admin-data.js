@@ -1,19 +1,18 @@
 const { createClient } = require('@supabase/supabase-js');
+const jwt = require('jsonwebtoken');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
 
-const supabaseAuth = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
-
-async function verifyToken(token) {
-  if (!token) return false;
-  const { data, error } = await supabaseAuth.auth.getUser(token);
-  return !error && !!data.user;
+function verifyAdminToken(token) {
+  if (!token) return null;
+  try {
+    return jwt.verify(token, process.env.ADMIN_JWT_SECRET);
+  } catch (e) {
+    return null;
+  }
 }
 
 module.exports = async function(req, res) {
@@ -22,8 +21,8 @@ module.exports = async function(req, res) {
   }
 
   const token = (req.headers.authorization || '').replace('Bearer ', '');
-  const valid = await verifyToken(token);
-  if (!valid) return res.status(401).json({ error: 'Unauthorized' });
+  const decoded = verifyAdminToken(token);
+  if (!decoded) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
     const [customersRes, paymentsRes] = await Promise.all([

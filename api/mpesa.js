@@ -22,7 +22,7 @@ function intasendRequest(options, payload) {
 module.exports = async function(req, res) {
   if (req.method === 'POST') {
     // Initiate STK push
-    const { phone, amount } = req.body;
+    const { phone, amount, userId } = req.body;
     if (!phone) return res.status(400).json({ error: 'Phone number is required' });
 
     let formattedPhone = phone.replace(/\s/g, '');
@@ -53,10 +53,10 @@ module.exports = async function(req, res) {
       const parsed = JSON.parse(response.body);
       console.log('STK Push response:', JSON.stringify(parsed));
 
-      // Save pending payment record
       const invoiceId = parsed.invoice?.invoice_id || parsed.id || null;
       if (invoiceId) {
         await supabase.from('payments').insert({
+          customer_id: userId || null,
           phone: formattedPhone,
           amount: amount || 390,
           currency: 'KES',
@@ -93,12 +93,25 @@ module.exports = async function(req, res) {
       const status = parsed.invoice?.state || parsed.state || '';
       const completed = status === 'COMPLETE';
 
-      // If completed, update payment record in DB
       if (completed) {
-        await supabase
+        // Mark payment as success
+        const { data: paymentRow } = await supabase
           .from('payments')
           .update({ status: 'success' })
-          .eq('transaction_id', invoice_id);
+          .eq('transaction_id', invoice_id)
+          .select('customer_id')
+          .single();
+
+        // Mark the customer as premium too — this is what unlocks the app
+        if (paymentRow && paymentRow.customer_id) {
+          await supabase
+            .from('customers')
+            .update({
+              is_premium: true,
+              premium_granted_at: new Date().toISOString()
+            })
+            .eq('id', paymentRow.customer_id);
+        }
       }
 
       return res.status(200).json({ completed, status, raw: parsed });
