@@ -54,7 +54,7 @@
       <li>Cancel anytime</li>
     </ul>
 
-    <!-- Kenya: M-Pesa -->
+    <!-- Kenya: M-Pesa via PayHero -->
     <div id="kenyaSection" style="display:none">
       <div class="field">
         <label class="section-label">M-Pesa / Airtel Money Number</label>
@@ -93,21 +93,18 @@
     let currentUser = null;
     let userCountry = sessionStorage.getItem('userCountry') || '';
 
-    // Auth guard — must be logged in to see this page
     async function init() {
       const { data } = await _sb.auth.getSession();
       if (!data.session) { window.location.href = 'login.html'; return; }
 
       currentUser = data.session.user;
 
-      // Fetch fresh profile
       const { data: profile } = await _sb.from('customers').select('is_premium, country').eq('id', currentUser.id).single();
       if (profile) {
         if (profile.is_premium) { window.location.href = 'index.html'; return; }
         userCountry = profile.country || userCountry;
       }
 
-      // Show correct payment section
       if (userCountry === 'KE') {
         document.getElementById('kenyaSection').style.display = 'block';
         document.getElementById('priceDisplay').innerHTML = 'KES 390 <span>/ month</span>';
@@ -120,7 +117,7 @@
 
     init();
 
-    // ── M-Pesa ──
+    // ── M-Pesa via PayHero ──
     document.getElementById('mpesaPayBtn').addEventListener('click', async function() {
       const phone = document.getElementById('mpesaPhone').value.trim();
       const errEl = document.getElementById('errorMsg');
@@ -138,11 +135,11 @@
         });
         const data = await res.json();
 
-        if (data.invoice_id) {
+        if (data.success && data.reference) {
           btn.textContent = '⏳ Waiting for PIN confirmation...';
-          pollPayment(data.invoice_id, btn);
+          pollPayment(data.reference, btn);
         } else {
-          errEl.textContent = 'Failed to send STK push. Please try again.';
+          errEl.textContent = data.error || 'Failed to send STK push. Please try again.';
           errEl.style.display = 'block'; btn.textContent = 'Pay with M-Pesa / Airtel →'; btn.disabled = false;
         }
       } catch(e) {
@@ -151,16 +148,22 @@
       }
     });
 
-    function pollPayment(invoiceId, btn) {
+    function pollPayment(reference, btn) {
       let attempts = 0;
       const interval = setInterval(async function() {
         attempts++;
         try {
-          const res = await fetch('/api/mpesa?invoice_id=' + invoiceId);
+          const res = await fetch('/api/mpesa?reference=' + reference);
           const data = await res.json();
+
           if (data.completed) {
             clearInterval(interval);
             await activatePremium();
+          } else if (data.status === 'failed') {
+            clearInterval(interval);
+            document.getElementById('errorMsg').textContent = 'Payment failed or was cancelled. Please try again.';
+            document.getElementById('errorMsg').style.display = 'block';
+            btn.textContent = 'Pay with M-Pesa / Airtel →'; btn.disabled = false;
           } else if (attempts >= 20) {
             clearInterval(interval);
             document.getElementById('errorMsg').textContent = 'Payment not confirmed. If you entered your PIN, wait and refresh.';
@@ -218,7 +221,6 @@
       window.location.href = 'login.html';
     }
 
-    // Handle return from external checkout with ?premium=success
     if (new URLSearchParams(window.location.search).get('premium') === 'success') {
       activatePremium();
     }
