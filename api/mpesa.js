@@ -58,6 +58,7 @@ module.exports = async function(req, res) {
       channel_id: process.env.PAYHERO_CHANNEL_ID,
       provider: 'm-pesa',
       external_reference: externalReference,
+      customer_name: req.body.fullName || 'Quote Card Customer',
       callback_url: process.env.PAYHERO_CALLBACK_URL // e.g. https://quote-card-maker.vercel.app/api/mpesa-callback
     };
 
@@ -73,11 +74,11 @@ module.exports = async function(req, res) {
         transaction_id: externalReference
       });
 
-      const response = await payheroRequest('/api/v2/payments/initiate-stk-push', 'POST', payload);
+      const response = await payheroRequest('/api/v2/payments', 'POST', payload);
       const parsed = JSON.parse(response.body);
       console.log('PayHero STK Push response:', JSON.stringify(parsed));
 
-      if (response.status >= 200 && response.status < 300) {
+      if (response.status >= 200 && response.status < 300 && parsed.success) {
         return res.status(200).json({ success: true, reference: externalReference });
       } else {
         // STK push failed — clean up the pending row so it doesn't linger
